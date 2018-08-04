@@ -9,7 +9,8 @@ class ChessControl():
     #self.starting_coords = [(r,c) for r in range(0,64,8) for c in range(0,32)]
   def set_threshold(self,system,threshold):
     system.feb.dac.dacPIXTHRaw.set(threshold)
-  
+  def set_val(self,system,feb_field,val_field,val):
+    eval("system.feb."+feb_field+"."+val_field+".set(val)")
   def toggle_pixel(self,system,row,col,enable=1,which_matrix=0,all_matrices=True):
     chargeInj = 1 if enable else 0
 

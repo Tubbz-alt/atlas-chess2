@@ -5,7 +5,9 @@ import numpy as np
 import sys
 import time
 
+
 class Hist_Plotter:
+	hit_n_key_tmp = False
 	def __init__(self,shape,x_list,x_label,fig_title,vline_x):
 		#shape is (rows,cols) of 
 		self.x_data = [0]
@@ -23,6 +25,8 @@ class Hist_Plotter:
 		self.ax.set_xlabel(self.x_label)
 		self.ax.set_ylabel("Hits")
 		self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
+		self.cid = self.fig.canvas.mpl_connect('key_press_event', Hist_Plotter.on_key)
+		self.hit_n_key = False
 
 	def add_data(self,data):
 		self.data = np.concatenate((self.data,data),axis=1)
@@ -32,7 +36,12 @@ class Hist_Plotter:
 
 	def close(self):
 		plt.close(self.fig)
-		
+	
+	@staticmethod	
+	def on_key(event):
+		print('key pressed: button={0}'.format(event.key))
+		Hist_Plotter.hit_n_key_tmp = (event.key == 'n')
+	
 	def plot(self):
 		self.fig.canvas.restore_region(self.background)
 		#self.ax.relim()
@@ -52,4 +61,7 @@ class Hist_Plotter:
 		#self.ax.autoscale_view(True,True,True)
 		#plt.plot((800,800), (0, maxy), 'k-')
 		self.fig.canvas.blit(self.ax.bbox)
+		if Hist_Plotter.hit_n_key_tmp:
+			self.hit_n_key = True
+			Hist_Plotter.hit_n_key_tmp = False
 

@@ -163,9 +163,16 @@ class ScanTest():
 				eventReader.hitmap_plot()
 				eval("hist_fig.add_data(eventReader.plotter.data"+str(self.matrix)+"[self.topleft[0]:self.topleft[0]+self.shape[0],self.topleft[1]:self.topleft[1]+self.shape[1]])")
 				hist_fig.plot()
+				#if this plot is boring (no data), allow user
+				# to skip this field val by pressing 'n' key
+				if hist_fig.hit_n_key:
+					eventReader.reset_data_frames()
+					hist_fig.hit_n_key = False
+					print("SKIPPING THIS PLOT")
+					break
 				#before appending to hist data, insert threshold into each pix hit
 				dfs = eventReader.data_frames
-				print("Data frames:",dfs)
+				#print("Data frames:",dfs)
 				for i in range(len(dfs)):
 					for j in range(len(dfs[i])):
 						dfs[i][j].insert(0,x)
@@ -180,5 +187,4 @@ class ScanTest():
 			hist_fig.close()
 			del hist_fig
 			#save csv files with data from hist_data
-			print(hist_data[0])
 			self.save_data_to_csv(hist_data,val)

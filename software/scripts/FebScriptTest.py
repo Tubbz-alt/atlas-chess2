@@ -107,8 +107,8 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
     print("Loading config file")
 
     """ Performs a test on a 1x8 block of pixels, swing th"""
-    start = 720
-    end = 900#0x7d0 = 2000
+    start = 980
+    end = 1015#0x7d0 = 2000
     step = 1#int((end-start)/nsteps)
     thresholds = range(start, end+1, step)
     ifbs = range(0,0x1F)
@@ -117,12 +117,20 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
 
     #Setting new value based on ibf scans
     #system.feb.Chess2Ctrl1.VNLogicatt.set(22)
+    #system.feb.Chess2Ctrl1.VPFBatt.set(16)
     
     #TODO check that pktWordSize is the nb of 64b frame received
     system.feb.sysReg.pktWordSize.set(255)
     system.feb.sysReg.timingMode.set(0x3) #reserved
-    val_fields = ["VPFBatt","VNLogicatt","VNSFatt","VNatt","VPLoadatt","VPTrimatt"]
-    val_ranges = [range(0,0x1F) for i in range(len(val_fields))]
+    val_fields = ["VPTrimatt","VPLoadatt","VNatt","VNSFatt","VNLogicatt","VPFBatt"]
+    best_vals = {}
+    best_vals["VPFBatt"] = 0xa
+    best_vals["VNLogicatt"] = 0x1c
+    best_vals["VNSFatt"] = 0x1d
+    best_vals["VNatt"] = 0x1e
+    best_vals["VPLoadatt"] = 0x1e
+    best_vals["VPTrimatt"] = 0xc #not very important--see 08-03_17-47
+    val_ranges = [range(0,32) for i in range(len(val_fields))]
     for val_ind in range(len(val_fields)):
         val_field = val_fields[val_ind]
         #disable all pixels
@@ -162,10 +170,10 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         
         eventReader.hitmap_show()
         #scan through each val while keeping all other vals at config specs
-        system.root.ReadConfig(configFile)
+        for k in val_fields:
+            chess_control.set_val(system,"Chess2Ctrl1",k,best_vals[k])
         print("Loading config file")
         scan_test.scan(system,eventReader,val_fields)
-	
     # Run gui
     appTop.exec_()
 
