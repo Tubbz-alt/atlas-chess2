@@ -107,32 +107,43 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
     print("Loading config file")
 
     """ Performs a test on a 1x8 block of pixels, swing th"""
-    start = 980
-    end = 1015#0x7d0 = 2000
-    step = 1#int((end-start)/nsteps)
+    start = 0
+    end = 1000#0x7d0 = 2000
+    step = 8#int((end-start)/nsteps)
     thresholds = range(start, end+1, step)
-    ifbs = range(0,0x1F)
     baselines = range(start,end+1,step)
-    #system.feb.dac.dacPIXTHRaw.set(0x3e8)
 
-    #Setting new value based on ibf scans
-    #system.feb.Chess2Ctrl1.VNLogicatt.set(22)
-    #system.feb.Chess2Ctrl1.VPFBatt.set(16)
-    
     #TODO check that pktWordSize is the nb of 64b frame received
     system.feb.sysReg.pktWordSize.set(255)
     system.feb.sysReg.timingMode.set(0x3) #reserved
-    val_fields = ["VPTrimatt","VPLoadatt","VNatt","VNSFatt","VNLogicatt","VPFBatt"]
+
+    fields = ["Chess2Ctrl1."+x for x in ["VPTrimatt","VPLoadatt","VNatt","VNSFatt","VNLogicatt","VPFBatt"]]
     best_vals = {}
-    best_vals["VPFBatt"] = 0xa
-    best_vals["VNLogicatt"] = 0x1c
-    best_vals["VNSFatt"] = 0x1d
-    best_vals["VNatt"] = 0x1e
-    best_vals["VPLoadatt"] = 0x1e
-    best_vals["VPTrimatt"] = 0xc #not very important--see 08-03_17-47
-    val_ranges = [range(0,32) for i in range(len(val_fields))]
-    for val_ind in range(len(val_fields)):
-        val_field = val_fields[val_ind]
+    best_vals["Chess2Ctrl1.VPFBatt"] = 0xa
+    best_vals["Chess2Ctrl1.VNLogicatt"] = 0x1c
+    best_vals["Chess2Ctrl1.VNSFatt"] = 0x1d
+    best_vals["Chess2Ctrl1.VNatt"] = 0x1e
+    best_vals["Chess2Ctrl1.VPLoadatt"] = 0x1e
+    best_vals["Chess2Ctrl1.VPTrimatt"] = 0xc #not very important--see 08-03_17-47
+    #val_ranges = [range(0,32) for i in range(len(val_fields))]
+    specials = ["dac.dacPIXTHRaw","dac.dacBLRaw"]
+    scan_fields = ["dac.dacPIXTHRaw","dac.dacBLRaw","Chess2Ctrl1.VPTrimatt"]
+    param_config_info_const = "" #never changes after this init
+    val_ranges = {}
+    for f in fields:
+        val_ranges[f] = range(10,11)
+        param_config_info_const += f+"="+str(best_vals[f])+","
+    for sp in specials:        
+        val_ranges[sp] = range(0,1) #threshold or baseline
+    
+    #Loop through scan_fields, scan given range of values for that scan_field. 
+    # Each value of scan_field makes a unique plot.
+    for scan_field in scan_fields:
+        param_config_info_tmp = "" #changes for each config file
+        for sf in scan_fields:
+            if sf != scan_field and sf not in specials:
+                param_config_info_tmp += sf+"="+str(best_vals[sf])+","
+        param_config_info = param_config_info_const + param_config_info_tmp
         #disable all pixels
         print("Disable all pixels")
         chess_control.disable_all_pixels(system,all_matrices=True)
@@ -141,10 +152,9 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
 
         scan_test = ScanTest()
         scan_test.set_matrix(1)
-        scan_test.set_feb_field("Chess2Ctrl1")
-        scan_test.set_val_field(val_field)
+        scan_test.set_scan_field(scan_field)
     	#--> scanning system.feb.Chess2Ctrl1.<val_field>
-        scan_test.set_val_range(val_ranges[val_ind]) #range for VPFBatt
+        scan_test.set_scan_range(val_ranges[scan_field])
         
         #scan_test.set_shape((8,1)) #block of 8 rows by 1 column
         scan_test.set_shape((8,1))
@@ -161,19 +171,24 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         #time.sleep(1)
 
 
+        if scan_field == "dac.dacBLRaw":
+            scan_test.set_scan_type("baseline_scan")
+            scan_test.set_x_vals(thresholds)
+        elif scan_field == "dac.dacPIXTHRaw":
+            scan_test.set_scan_type("threshold_scan")
+            scan_test.set_x_vals(baselines)
+        else: #make default x_values thresholds for now
+            scan_test.set_scan_type("other_scan")
+            scan_test.set_x_vals(thresholds)
+            scan_test.set_fixed_baseline(744) #arbitrary (0,2000)
 
-        scan_test.set_scan_type("threshold_scan")
-        scan_test.set_thresholds(thresholds)
-        scan_test.set_fixed_baseline(744)
-        #scan_test.set_scan_type("baseline_scan")
-        #scan_test.set_fixed_threshold(fixed_threshold)
-        
         eventReader.hitmap_show()
         #scan through each val while keeping all other vals at config specs
-        for k in val_fields:
-            chess_control.set_val(system,"Chess2Ctrl1",k,best_vals[k])
+        for sf in scan_fields:
+            if sf not in specials:
+                chess_control.set_val(system,sf,best_vals[sf])
         print("Loading config file")
-        scan_test.scan(system,eventReader,val_fields)
+        scan_test.scan(chess_control,system,eventReader,param_config_info)
     # Run gui
     appTop.exec_()
 
