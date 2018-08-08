@@ -86,12 +86,6 @@ class Frame_data():
 					if nhits > 0:
 						datalines.append([m,r,c,nhits])
 		return datalines	
-	def get_att_vals(self,system,feb_field,val_fields):
-		#values of interest: VNLogicatt,VNSFatt,VNatt,VPFBatt,VPLoadatt,VPTrimatt	
-		vfs = []
-		for vf in val_fields:
-			vfs.append(chess_control.get_val(system,feb_field,vf))
-		return vfs
 	def print_valid_data(self):
 		#We check if we have non-empty lists
 		if self.dvflag_M0 or self.dvflag_M1 or self.dvflag_M2:

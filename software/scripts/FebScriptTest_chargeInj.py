@@ -131,9 +131,9 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         val_ranges[f] = range(0,32)
         param_config_info_const += f+"="+str(best_vals[f])+","
     for sp in specials:        
-        val_ranges[sp] = range(700,2000+1,100) #threshold or baseline
+        val_ranges[sp] = range(0x5c2,2000,100) #threshold or baseline
     
-    threshold_xrange = range(500,2000,8) #used when scanning bl or any param
+    threshold_xrange = range(1000,2500,16) #used when scanning bl or any param
     baseline_xrange = range(0,1000,8) #only used when scanning thresholds
 
     #Loop through scan_fields, scan given range of values for that scan_field. 
@@ -143,6 +143,7 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         for sf in scan_fields:
             if sf != scan_field and sf not in specials:
                 param_config_info_tmp += sf+"="+str(best_vals[sf])+","
+    
         param_config_info = param_config_info_const + param_config_info_tmp
         #disable all pixels
         print("Disable all pixels")
@@ -157,11 +158,12 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         scan_test.set_scan_range(val_ranges[scan_field])
         
         #scan_test.set_shape((8,1)) #block of 8 rows by 1 column
-        scan_test.set_shape((8,1))
+        scan_test.set_shape((1,1))
         
-        scan_test.set_topleft((112,31)) #128 rows,32 cols
+        #scan_test.set_topleft((112,31)) #128 rows,32 cols
+        scan_test.set_topleft((120,1))
         scan_test.set_ntrigs(5) #number of readout trigs separated by sleeptime
-        scan_test.set_sleeptime(5) #ms
+        scan_test.set_sleeptime(50) #ms
         scan_test.set_pulserStatus("OFF") #just to inform filename
 
         print("Enabling matrix 1")
@@ -188,7 +190,7 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
             if sf not in specials:
                 chess_control.set_val(system,sf,best_vals[sf])
         print("Loading config file")
-        scan_test.scan(chess_control,system,eventReader,param_config_info)
+        scan_test.scan_with_chargeInj(chess_control,system,eventReader,param_config_info)
     # Run gui
     appTop.exec_()
 
