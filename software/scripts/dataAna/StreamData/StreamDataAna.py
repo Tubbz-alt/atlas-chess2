@@ -48,9 +48,9 @@ def data_ana(arg):
         #data_tree = TTree("data_tree"," data for chess2")
         
         #para=np.zeros(1,dtype=float)
-        hitmap_m0=np.zeros(shape=(32,128))
-        hitmap_m1=np.zeros(shape=(32,128))
-        hitmap_m2=np.zeros(shape=(32,128))
+        hitmap_m0=np.zeros(shape=(128,32))
+        hitmap_m1=np.zeros(shape=(128,32))
+        hitmap_m2=np.zeros(shape=(128,32))
         #time_all=np.array("f",[])
 
         #data_tree.Branch('normal',time_all,'normal/F')
@@ -86,7 +86,7 @@ def data_ana(arg):
             for i in range(len(frame_data_t)):
                 alldata.add_data("buffer",frame_data_t[i],i)
             fill_fre+=1
-            if len(frames_perstep)==1 and fill_fre==int(frames_perstep):
+            if len(frames_perstep)==1 and fill_fre==int(frames_perstep[0]):
                 print 'filling ',fill_num+1,' of ',Steps
                 hitmap_m0=alldata.hitmap_t0
                 hitmap_m1=alldata.hitmap_t1
@@ -94,12 +94,12 @@ def data_ana(arg):
                 Para_h.Fill(int(par[fill_num]))
                 for i in range(nCols):
                     for j in range(nRows):
-                        H_P0[fill_num].Fill(i,j,hitmap_m0[i][j])     
-                        H_P1[fill_num].Fill(i,j,hitmap_m1[i][j])     
-                        H_P2[fill_num].Fill(i,j,hitmap_m2[i][j])    
-                        Hitmap_M0_3d.Fill(i,j,int(par[fill_num]),hitmap_m0[i][j]) 
-                        Hitmap_M1_3d.Fill(i,j,int(par[fill_num]),hitmap_m1[i][j]) 
-                        Hitmap_M2_3d.Fill(i,j,int(par[fill_num]),hitmap_m2[i][j])
+                        H_P0[fill_num].Fill(i,j,hitmap_m0[j][i])     
+                        H_P1[fill_num].Fill(i,j,hitmap_m1[j][i])     
+                        H_P2[fill_num].Fill(i,j,hitmap_m2[j][i])    
+                        Hitmap_M0_3d.Fill(i,j,int(par[fill_num]),hitmap_m0[j][i]) 
+                        Hitmap_M1_3d.Fill(i,j,int(par[fill_num]),hitmap_m1[j][i]) 
+                        Hitmap_M2_3d.Fill(i,j,int(par[fill_num]),hitmap_m2[j][i])
                 H_P0[fill_num].Write()
                 H_P1[fill_num].Write()
                 H_P2[fill_num].Write()
@@ -116,12 +116,12 @@ def data_ana(arg):
                 Para_h.Fill(int(par[fill_num]))
                 for i in range(nCols):
                     for j in range(nRows):
-                        H_P0[fill_num].Fill(i,j,hitmap_m0[i][j])     
-                        H_P1[fill_num].Fill(i,j,hitmap_m1[i][j])     
-                        H_P2[fill_num].Fill(i,j,hitmap_m2[i][j])    
-                        Hitmap_M0_3d.Fill(i,j,int(par[fill_num]),hitmap_m0[i][j]) 
-                        Hitmap_M1_3d.Fill(i,j,int(par[fill_num]),hitmap_m1[i][j]) 
-                        Hitmap_M2_3d.Fill(i,j,int(par[fill_num]),hitmap_m2[i][j]) 
+                        H_P0[fill_num].Fill(i,j,hitmap_m0[j][i])     
+                        H_P1[fill_num].Fill(i,j,hitmap_m1[j][i])     
+                        H_P2[fill_num].Fill(i,j,hitmap_m2[j][i])    
+                        Hitmap_M0_3d.Fill(i,j,int(par[fill_num]),hitmap_m0[j][i]) 
+                        Hitmap_M1_3d.Fill(i,j,int(par[fill_num]),hitmap_m1[j][i]) 
+                        Hitmap_M2_3d.Fill(i,j,int(par[fill_num]),hitmap_m2[j][i]) 
                 H_P0[fill_num].Write()
                 H_P1[fill_num].Write()
                 H_P2[fill_num].Write()
