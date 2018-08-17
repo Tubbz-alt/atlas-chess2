@@ -126,6 +126,10 @@ def gui(arg = "192.168.4.28"):
     system.start(pollEn=True, pyroGroup=None, pyroHost=None)
     guiTop.addTree(system)
     guiTop.resize(800,1000)
+   
+    log_file="log_all.log"
+    log_f = open(log_file,"a")
+    description = input("Describe the test:\n")
     path_l="configure_log.txt"
     l_file = open(path_l,"w")
     save_configureFile(l_file,"../config/defaultR2_test.yml"); 
@@ -146,11 +150,13 @@ def gui(arg = "192.168.4.28"):
         P_range=range(0x258, 0x4b0, 0x6)
         Path=""
         s_name=StreamRO_concept(system, Nframes, Trigger_type, Pixels, Parameter_interested, P_range, Path, l_file, hotpixel_m0, hotpixel_m1, hotpixel_m2) 
-
+        log_f.write() 
         l_file.close()
         os.rename(path_l,s_name+'.txt')
         #time2=datetime.datetime.now()
-        time2=time.time()
+        log_f.write(s_name+" :\n")
+        log_f.write("--- "+description+"\n")
+        log_f.close()
         print("finished in "+str(time2-time1)+" seconds")
 
 
