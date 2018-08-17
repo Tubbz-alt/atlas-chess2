@@ -354,28 +354,41 @@ class MplCanvas_effi_plot(FigureCanvas):
         #self.fig.canvas.draw()
        # plt.plot(self.datasize,self.efficiency_signal_received,'b-')
         self.draw()
+
     def update_effi_plot(self,dvflag_M0,mhflag_M0,dvflag_M1,mhflag_M1,dvflag_M2,mhflag_M2):
-        if len(dvflag_M0)==0:
-            print("nothing ")
-        else:
-            self.eff_0=0
-            self.eff_1=0
-            self.eff_2=0
-            for i in range(len(dvflag_M0)):
-                if dvflag_M0[i]==1:
-                    self.eff_0+=1 
-                if dvflag_M1[i]==1:
-                    self.eff_1+=1 
-                if dvflag_M2[i]==1:
-                    self.eff_2+=1 
-            self.efficiency_data_arrived[0].append(self.eff_0/(len(dvflag_M0)/4))     
-            self.efficiency_data_arrived[1].append(self.eff_1/(len(dvflag_M0)/4))    
-            self.efficiency_data_arrived[2].append(self.eff_2/(len(dvflag_M0)/4))
-            if len(self.efficiency_data_arrived[0])>=self.maxContain:
-                self.efficiency_data_arrived[0].remove(self.efficiency_data_arrived[0][0])
-                self.efficiency_data_arrived[1].remove(self.efficiency_data_arrived[1][0])
-                self.efficiency_data_arrived[2].remove(self.efficiency_data_arrived[2][0])
-            self.plot()    
+       self.eff_0=0
+       self.eff_1=0
+       self.eff_2=0
+       if len(dvflag_M0)>0:
+           for i in range(len(dvflag_M0)):
+               if dvflag_M0[i]==1:
+                   self.eff_0+=1 
+           self.efficiency_data_arrived[0].append(self.eff_0/(len(dvflag_M0)/4))    
+       else:
+           self.efficiency_data_arrived[0].append(0)
+            
+       if len(dvflag_M1)>0:
+           for i in range(len(dvflag_M1)):
+               if dvflag_M1[i]==1:
+                   self.eff_1+=1 
+           self.efficiency_data_arrived[1].append(self.eff_1/(len(dvflag_M1)/4))    
+       else:
+           self.efficiency_data_arrived[1].append(0)
+
+       if len(dvflag_M2)>0:
+           for i in range(len(dvflag_M2)):
+               if dvflag_M2[i]==1:
+                   self.eff_2+=1 
+           self.efficiency_data_arrived[2].append(self.eff_2/(len(dvflag_M2)/4))    
+       else:
+           self.efficiency_data_arrived[2].append(0)
+
+       if len(self.efficiency_data_arrived[0])>=self.maxContain:
+           self.efficiency_data_arrived[0].remove(self.efficiency_data_arrived[0][0])
+           self.efficiency_data_arrived[1].remove(self.efficiency_data_arrived[1][0])
+           self.efficiency_data_arrived[2].remove(self.efficiency_data_arrived[2][0])
+       self.plot()   
+
     def initial_time_plot(self):
         self.timeofFrames=[]
         self.plot_time()
