@@ -42,7 +42,6 @@ import numpy as np
 import argparse
 
 
-#from SCurveNP import makeSCurve
 from SCurveNP import *
 
 

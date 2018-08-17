@@ -43,11 +43,9 @@ import argparse
 import frameViewer as vi
 
 
-#from SCurveNP import makeSCurve
 from SCurveNP import *
 
 
-START_VIEWER=True
 
 
 c2_hists = []
@@ -88,7 +86,7 @@ appTop = PyQt4.QtGui.QApplication(sys.argv)
 guiTop = pyrogue.gui.GuiTop(group='PyRogueGui')
 system = System(guiTop, cmd, dataWriter, srp)
 
-def gui(arg):
+def gui(arg = "192.168.4.28", onlineViewer = 0):
     
     hists = []
 
@@ -133,10 +131,6 @@ def gui(arg):
  
     # Create GUI
     system.start(pollEn=True, pyroGroup=None, pyroHost=None)
-    #system.feb.memReg.chargInjStartEventReg.set(1)
-   # system.feb.dac.dacPIXTHRaw.set(0x2ef)
-   # system.feb.dac.dacBLRRaw.set(0x5b8)
-   # system.feb.dac.dacBLRaw.set(0x2e8)
     guiTop.addTree(system)
     guiTop.resize(800,1000)
     system.root.ReadConfig("/u1/home/hanyubo/atlas-chess2_b2/software/config/defaultR2_test.yml")
@@ -148,34 +142,22 @@ def gui(arg):
     nRows=128
     nColumns=32
     pixels= None
-    print("Disable all pixels")
-    system.feb.Chess2Ctrl0.writeAllPixels(enable= 0,chargeInj= 1,trimI=7 )
-    system.feb.Chess2Ctrl1.writeAllPixels(enable= 0,chargeInj= 1,trimI=7 )
-    system.feb.Chess2Ctrl2.writeAllPixels(enable= 0,chargeInj= 1,trimI=7 )
-
-    pixels = pixels if (pixels!=None) else [ (row,col) for row in range(10,nRows) for col in range(10,nColumns) ]
-    print("Enable all pixels")
-    for (row,col) in pixels:
-        system.feb.Chess2Ctrl0.writePixel(enable=1, chargeInj=0, col=col, row=row, trimI= 7)
-        system.feb.Chess2Ctrl1.writePixel(enable=1, chargeInj=0, col=col, row=row, trimI= 7)
-        system.feb.Chess2Ctrl2.writePixel(enable=1, chargeInj=0, col=col, row=row, trimI= 7)
-    print("finish configure the pixels")
- #   system.dataWriter.dataFile.set("test1.dat")
- #   system.dataWriter._setOpen(system.dataWriter,system.dataWriter.open,True,1)
-    #system.runControl._setRunRate(system.runControl.runRate,'1 Hz',1)
-    #system.runControl._setRunState(system.runControl.runState,'Running',1)
-    if (START_VIEWER):
+#    print("Disable all pixels")
+#    system.feb.Chess2Ctrl0.writeAllPixels(enable= 0,chargeInj= 1,trimI=7 )
+#    system.feb.Chess2Ctrl1.writeAllPixels(enable= 0,chargeInj= 1,trimI=7 )
+#    system.feb.Chess2Ctrl2.writeAllPixels(enable= 0,chargeInj= 1,trimI=7 )
+#
+#    pixels = pixels if (pixels!=None) else [ (row,col) for row in range(10,nRows) for col in range(10,nColumns) ]
+#    print("Enable all pixels")
+#    for (row,col) in pixels:
+#        system.feb.Chess2Ctrl0.writePixel(enable=1, chargeInj=0, col=col, row=row, trimI= 7)
+#        system.feb.Chess2Ctrl1.writePixel(enable=1, chargeInj=0, col=col, row=row, trimI= 7)
+#        system.feb.Chess2Ctrl2.writePixel(enable=1, chargeInj=0, col=col, row=row, trimI= 7)
+    if (int(sys.argv[2])>0): 
         viewer = vi.Window(system)
         viewer.eventReaderMonitoring.frameIndex = 0
         pyrogue.streamTap(ethLink.application(1), viewer.eventReaderMonitoring)
             
-   # system.dataWriter._setBufferSize(system.dataWriter,system.dataWriter.bufferSize,10000)
-   # system.dataWriter._setMaxFileSize(system.dataWriter,system.dataWriter.maxFileSize,100000)
-   # while 1:
-   #    if (system.dataWriter._getFrameCount(system.dataWriter,system.dataWriter._getFrameCount))>1000:
-   #        system.feb.sysReg.timingMode.set(3)
-   #        print("get 1000 frame")
-
 
     # Run gui
     appTop.exec_()
@@ -188,4 +170,4 @@ def gui(arg):
 if __name__ == '__main__':
     rogue.Logging.setFilter('pyrogue.SrpV3', rogue.Logging.Debug)
 
-    c2_hists = gui(sys.argv[1])
+    c2_hists = gui(sys.argv[1],sys.argv[2])
