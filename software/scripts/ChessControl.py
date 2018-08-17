@@ -13,13 +13,11 @@ class ChessControl():
     system.feb.dac.dacBLRaw.set(baseline)
   def set_baseline_res(self,system,baseline_res):
     system.feb.dac.dacBLRRaw.set(baseline_res)
-
-##TODO: update below funcs. documentation is hitDetRow<matrix>_<index of hit[0-7]>
   def get_det_rows(self,system,matrix):
     det_rows = []
     for ind in range(8):
       det_rows.append(eval("int(system.feb.chargeInj.hitDetRow"+str(matrix)+"_"+str(ind)+".get())"))
-    return det_rows #0 <= len <= 8
+    return det_rows #0 <= len() <= 8
   def get_det_cols(self,system,matrix):
     det_cols = []
     for ind in range(8):
@@ -35,14 +33,16 @@ class ChessControl():
     for ind in range(8):
       det_valid_hits.append(eval("system.feb.chargeInj.hitDetValid"+str(matrix)+"_"+str(ind)+".get()"))
     return det_valid_hits
-
-
-
   def set_pulse_width(self,system,pw):
     #arg in units of 3.125ns (1/320MHz)
     system.feb.chargeInj.pulseWidthRaw.set(pw)
+  def set_pulse_delay(self,system,pd):
+    system.feb.chargeInj.pulseDelayRaw.set(pd)
+  def set_inv_pulse(self,system,b): #b is bool
+    system.feb.chargeInj.invPulse.set(b) 
+  def set_inh_pulse(self,system,b): #0=inhibit
+    system.feb.chargeInj.calPulseInh.set(b)
   def send_pulse(self,system):
-    #pass
     system.feb.chargeInj.calPulse.set(1)
     #system.feb.chargeInj.calPulseInh.set(1) #inhibit pulse
   def set_val(self,system,scan_field,val):

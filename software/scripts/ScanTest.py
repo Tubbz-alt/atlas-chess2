@@ -8,7 +8,7 @@ from ChargeInj import ChargeInj
 NOW = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 class ScanTest():
-	def __init__(self,matrix=0,scan_field=None,scan_range=range(0,32),shape=(8,1),topleft=(0,0),ntrigs=5,sleeptime=10,pulserStatus="ON",delta_BL_to_BLR=0x200):
+	def __init__(self,matrix=0,scan_field=None,scan_range=range(0,32),shape=(8,1),topleft=(0,0),ntrigs=5,sleeptime=10,pulserStatus="ON",delta_BL_to_BLR=0x200,chargeInjEnabled=0):
 		self.matrix = matrix
 		self.scan_field = scan_field
 		self.scan_range = scan_range
@@ -18,6 +18,7 @@ class ScanTest():
 		self.sleeptime = sleeptime #ms, between each readout trig in ntrigs
 		self.pulserStatus = pulserStatus
 		self.delta_BL_to_BLR = delta_BL_to_BLR
+		self.chargeInjEnabled = chargeInjEnabled #1 is enabled
 
 		#below attr's are set later
 		self.fixed_baseline = None
@@ -27,10 +28,11 @@ class ScanTest():
 		self.is_other_scan = False
 		self.x_vals = [] #list of x values
 		self.x_label = None #xaxis label
-		self.header = None #title of figure
+		self.header = None #used in naming files
+		self.fig_title = None #title of figure
 		self.vline_x = -1 #x value of vertical line
 
-		self.scan_dir = "../../Chess2Data/noise_"+NOW
+		self.scan_dir = "../../Chess2Data/"+NOW
 		self.data_savedir = self.scan_dir+"/data"
 		self.fig_savedir = self.scan_dir+"/plots"
 		self.config_file_dir = self.scan_dir+"/config"
@@ -56,8 +58,12 @@ class ScanTest():
 		self.sleeptime = sleeptime
 	def set_pulserStatus(self,pulserStatus):
 		self.pulserStatus = pulserStatus
-	def enable_block(self,system,chess_control):
+	def set_chargeInjEnabled(self,b):
+		self.chargeInjEnabled = b 
+	def enable_block(self,chess_control,system):
 		chess_control.enable_block(system,topleft=self.topleft,shape=self.shape,which_matrix=self.matrix,all_matrices=False)
+	def disable_block(self,chess_control,system):
+		chess_control.disable_block(system,topleft=self.topleft,shape=self.shape,which_matrix=self.matrix,all_matrices=False)
 	def set_scan_type(self,scan_type):
 		#scan_type is "threshold_scan" or "baseline_scan"
 		if scan_type == "threshold_scan": #x axis will be baselines
@@ -71,7 +77,16 @@ class ScanTest():
 	def save_fig(self,hist_fig):
 		#save figure to Desktop
 		fig_filename = self.header+".png"
-		hist_fig.fig.savefig(self.fig_savedir+"/"+fig_filename)
+		fig_path = self.fig_savedir+"/"+fig_filename
+		#add "_trial_<#>" before ".png" if all configs are the same (repeated trials)
+		i = 1
+		if os.path.isfile(fig_path): 
+			fig_path = fig_path[:-4]+"_trial_"+str(i)+".png"
+			while os.path.isfile(fig_path): 
+				i += 1
+				fig_path = fig_path[:-5-int(i/10)]+str(i)+".png"
+			
+		hist_fig.fig.savefig(fig_path)
 		print("Just saved fig")
 	def save_fig_config(self,field_vals_msg):
 		fig_config_filename = self.header+"_config.txt"
@@ -79,13 +94,16 @@ class ScanTest():
 			f.write(field_vals_msg)
 		f.close()
 
-	def get_plot_config_msg(self,system,val,param_config_info,start_time,stop_time):
+	def get_config_msg(self,system,val,param_config_info,start_time,stop_time):
 		msg = "Start: "+start_time.strftime("%c")+"\t Stop: "+stop_time.strftime("%c")+"\n"
 		deltatime = stop_time-start_time
+		msg += "Topleft: "+str(self.topleft)+"\n"
+		msg += "Shape: "+str(self.shape)+"\n"
 		msg += "Delta: "+str(deltatime.seconds)+" seconds\n"
-		msg += "ntrigs: "+str(self.ntrigs)+"\n"
-		msg += "sleeptime: "+str(self.sleeptime)+"ms between trigs\n"
-		msg += "pulser: "+self.pulserStatus+"\n"
+		msg += "Ntrigs: "+str(self.ntrigs)+"\n"
+		msg += "Sleeptime: "+str(self.sleeptime)+"ms between trigs\n"
+		msg += "Pulser status: "+self.pulserStatus+"\n"
+		msg += "Charge injection: "+["disabled","enabled"][self.chargeInjEnabled]+"\n"
 		if self.is_th_scan:
 			msg += "Threshold channel: "+str(val)+"\n"
 		elif self.is_bl_scan: 
@@ -93,7 +111,7 @@ class ScanTest():
 		else: #parameter scan. write baseline because xaxis is thresholds for now
 			msg += "Baseline channel: "+str(self.fixed_baseline)+"\n"
 
-		msg += "scan_param: "+self.scan_field+"\n"
+		msg += "Scan param: "+self.scan_field+"\n"
 		#now add lines specifying parameter config
 		for param_line in param_config_info.split(",")[:-1]:
 			if self.scan_field in param_line: 
@@ -122,7 +140,8 @@ class ScanTest():
 		f.close()
 
 	def init_scan(self,val):
-		self.header = "ntrigs="+str(self.ntrigs)+",sleeptime="+str(self.sleeptime)+"ms,pulser="+self.pulserStatus+","+self.scan_field+"="+str(val)
+		self.header = "ntrigs="+str(self.ntrigs)+",sleeptime="+str(self.sleeptime)+"ms,pulser="+self.pulserStatus+","+self.scan_field+"="+str(val)+",chargeInjEnabled="+str(self.chargeInjEnabled)
+		self.fig_title = "topleft="+str(self.topleft)+",shape="+str(self.shape)+","+self.scan_field+"="+str(val)+",chargeInjEnabled="+str(self.chargeInjEnabled)
 		if self.is_bl_scan: 
 			self.x_label = "Threshold Voltage Channel (~3.3V at channel 4096)"
 		elif self.is_th_scan:
@@ -159,7 +178,7 @@ class ScanTest():
 			hist_fig.hit_n_key = False
 			print("SKIPPING THIS PLOT")
 			return True
-	
+
 	def scan(self,chess_control,system,eventReader,param_config_info):
 		if self.scan_field == None:
 			raise("FIELD NOT SET FOR SCAN TEST")
@@ -168,102 +187,57 @@ class ScanTest():
 			chess_control.set_baseline(system,self.fixed_baseline)
 			chess_control.set_baseline_res(system,self.fixed_baseline+self.delta_BL_to_BLR)
 
-		for val in self.scan_range:
-			start_time = datetime.now()
-			eval("system.feb."+self.scan_field+".set("+str(val)+")")
-			self.init_scan(val)
-			hist_fig = Hist_Plotter(self.shape,self.x_vals,self.x_label,self.header,self.vline_x)
-			hist_fig.show()
-			#x is threshold or baseline
-			hist_data = []
-			for x in self.x_vals:
-				self.set_x_val(chess_control,system,x)
-				eventReader.hitmap_reset()
-				#########################
-				system.feb.sysReg.timingMode.set(0x0) #enable data stream
-				print("taking data")
-				trig_count = 0
-				while trig_count < self.ntrigs:
-					time.sleep(self.sleeptime/1000.0)
-					system.feb.sysReg.softTrig()
-					trig_count += 1
-				system.feb.sysReg.timingMode.set(0x3) #stop taking data
-				#########################
-				eventReader.hitmap_plot()
-				eval("hist_fig.add_data(eventReader.plotter.data"+str(self.matrix)+"[self.topleft[0]:self.topleft[0]+self.shape[0],self.topleft[1]:self.topleft[1]+self.shape[1]])")
-				hist_fig.plot()
-				#if this plot is boring (no data), allow user
-				# to skip this field val by pressing 'n' key
-				if self.check_key_press(hist_fig):
-					break #skip this plot
-				#before appending to hist data, insert threshold into each pix hit
-				dfs = eventReader.data_frames
-				#print("Data frames:",dfs)
-				for i in range(len(dfs)):
-					for j in range(len(dfs[i])):
-						dfs[i][j].insert(0,x)
-				if len(dfs) > 0: 
-					hist_data.append(dfs)
-				eventReader.reset_data_frames()
-			#save plots,configs,and csvs
-			stop_time = datetime.now()
-			self.save_fig(hist_fig)
-			plot_config_msg = self.get_plot_config_msg(system,val,param_config_info,start_time,stop_time)
-			self.save_fig_config(plot_config_msg)
-			hist_fig.close()
-			del hist_fig
-			#save csv files with data from hist_data
-			self.save_data_to_csv(hist_data)
-
-	def scan_with_chargeInj(self,chess_control,system,eventReader,param_config_info):
-		if self.scan_field == None:
-			raise("FIELD NOT SET FOR SCAN TEST")
-		if self.is_other_scan: 
-			#if scanning Chess2Ctrl param, set fixed baseline
-			chess_control.set_baseline(system,self.fixed_baseline)
-			chess_control.set_baseline_res(system,self.fixed_baseline+self.delta_BL_to_BLR)
-
-		for val in self.scan_range:
-			start_time = datetime.now()
-			eval("system.feb."+self.scan_field+".set("+str(val)+")")
-			self.init_scan(val)
-			hist_fig = Hist_Plotter(self.shape,self.x_vals,self.x_label,self.header,self.vline_x)
-			hist_fig.show()
-			#x is threshold or baseline
-			hist_data = []
-			for x in self.x_vals:
-				self.set_x_val(chess_control,system,x)
-				eventReader.hitmap_reset()
-
-				#########################
-				system.feb.sysReg.timingMode.set(0x0) #enable data stream
-				print("taking data")
-				chargeInj = ChargeInj(matrix = self.matrix)
-				
+		#init chargeInj object
+		if self.chargeInjEnabled:
 				#pulse_width=multiple of 3.125ns
-				dt_nano = 5600 #5.6microseconds
+				dt_nano = 15000 #ns, same as yubo as of 8/17/18 
 				ncycles = int(dt_nano / 3.125)
-				chargeInj.set_pulse_width(chess_control,system,pulse_width=ncycles)
+				chargeInj = ChargeInj(matrix=self.matrix,
+											pulse_width=ncycles,
+											pulse_delay=0,
+											inv_pulse=False,
+											inh_pulse=1) #0=inhibit ??????????
+				chargeInj.init(chess_control,system)
+
+		for val in self.scan_range:
+			start_time = datetime.now()
+			eval("system.feb."+self.scan_field+".set("+str(val)+")")
+			self.init_scan(val)
+			hist_fig = Hist_Plotter(self.shape,self.x_vals,self.x_label,self.fig_title,self.vline_x)
+			hist_fig.show()
+			#x is threshold or baseline
+			hist_data = []
+			for x in self.x_vals:
+				self.set_x_val(chess_control,system,x)
+				eventReader.hitmap_reset()
+				print("Waiting 2 seconds in Scan_test line 213")
+				time.sleep(2.0)
+				#########################
+				system.feb.sysReg.timingMode.set(0x0) #enable data stream
+				print("taking data")
 				
 				trig_count = 0
-				pulse_data = []
+				pulse_data = [] #used for chargeInj pulses
 				while trig_count < self.ntrigs:	
-					chargeInj.send_pulse(chess_control,system)
+					if self.chargeInjEnabled: 
+						chargeInj.send_pulse(chess_control,system)
 					time.sleep(self.sleeptime/1000.0)
 					system.feb.sysReg.softTrig()
-					dat = chargeInj.get_data_from_pulse(chess_control,system)
-					#dat is at most 8 hits (len() <= 8) [[matrix,row,col,timestamp],[..],...]
-					if len(dat) > 0:
-						pulse_data.append(dat)
+					if self.chargeInjEnabled:
+						dat = chargeInj.get_data_from_pulse(chess_control,system)
+						#dat is at most 8 hits (len() <= 8) [[matrix,row,col,timestamp],[..],...]
+						if len(dat) > 0:
+							pulse_data.append(dat)
 					trig_count += 1
 				system.feb.sysReg.timingMode.set(0x3) #stop taking data
 				#########################
 
-				print("Pulse data:",pulse_data)
-				#add chargeInj pulses to hitmap ??
-				#for hit_dat in dat:
-				#	matrix,row,col = hit_dat[:3]
-				#	exec("eventReader.ev_hitmap_t"+str(matrix)+"[row,col] += 1")
+				if self.chargeInjEnabled:
+					print("Pulse data:",pulse_data)
+					#add chargeInj pulses to hitmap ?? this seems redundant
+					for hit_dat in dat:
+						matrix,row,col = hit_dat[:3]
+						exec("eventReader.ev_hitmap_t"+str(matrix)+"[row,col] += 1")
 
 
 
@@ -274,21 +248,24 @@ class ScanTest():
 				# to skip this field val by pressing 'n' key
 				if self.check_key_press(hist_fig):
 					break #skip this plot
-				#before appending to hist data, insert threshold into each pix hit
-				dfs = eventReader.data_frames
-				#[ frame: [[m,r,c,th],[m,r,c,th],...]
+
+				dfs = eventReader.get_data_frames()
+				#dfs = [ [ [m,r,c],[m,r,c],...], ...]
 				#print("Data frames:",dfs)
+				
+				#Before appending to hist data, insert threshold into each pix hit
 				for i in range(len(dfs)):
 					for j in range(len(dfs[i])):
 						dfs[i][j].insert(0,x)
+				#dfs = [ [ [x,m1,r1,c1],[x,m2,r2,c2],...], ...]
 				if len(dfs) > 0: 
 					hist_data.append(dfs)
 				eventReader.reset_data_frames()
 			#save plots,configs,and csvs
 			stop_time = datetime.now()
 			self.save_fig(hist_fig)
-			plot_config_msg = self.get_plot_config_msg(system,val,param_config_info,start_time,stop_time)
-			self.save_fig_config(plot_config_msg)
+			config_msg = self.get_config_msg(system,val,param_config_info,start_time,stop_time)
+			self.save_fig_config(config_msg)
 			hist_fig.close()
 			del hist_fig
 			#save csv files with data from hist_data

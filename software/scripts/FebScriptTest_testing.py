@@ -61,8 +61,6 @@ chess_control = ChessControl()
 
 def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
 
-    hists = []
-
     #################################################################
     # Check for PGP link
     if (ip == 'PGP'):
@@ -106,12 +104,7 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
     system.root.ReadConfig(configFile)
     print("Loading config file")
 
-    """ Performs a test on a 1x8 block of pixels, swing th"""
-    start = 0
-    end = 1000#0x7d0 = 2000
-    step = 8#int((end-start)/nsteps)
-    thresholds = range(start, end+1, step)
-    baselines = range(start,end+1,step)
+    """ Performs a test on a 8x1 block of pixels """
 
     #TODO check that pktWordSize is the nb of 64b frame received
     system.feb.sysReg.pktWordSize.set(255)
@@ -127,15 +120,21 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
     best_vals["Chess2Ctrl1.VPTrimatt"] = 0xc #not very important--see 08-03_17-47
     #val_ranges = [range(0,32) for i in range(len(val_fields))]
     specials = ["dac.dacPIXTHRaw","dac.dacBLRaw"]
-    scan_fields = ["dac.dacPIXTHRaw","dac.dacBLRaw","Chess2Ctrl1.VPTrimatt"]
+    #scan_fields = ["dac.dacPIXTHRaw","dac.dacBLRaw","Chess2Ctrl1.VPTrimatt"]
+    scan_fields = ["dac.dacBLRaw"]
     param_config_info_const = "" #never changes after this init
-    val_ranges = {}
+    val_ranges = {} #range of values to scan a given parameter key
+    #init val_ranges and param_config_info_const
     for f in fields:
-        val_ranges[f] = range(10,11)
+        val_ranges[f] = range(0,32)
         param_config_info_const += f+"="+str(best_vals[f])+","
     for sp in specials:        
-        val_ranges[sp] = range(0,1) #threshold or baseline
+        #val_ranges[sp] = range(900,1400,100) #threshold or baseline
+        val_ranges[sp] = [1100] #keep special val fixed
     
+    threshold_xrange = range(1000,1500,16) #used when scanning bl or any param
+    baseline_xrange = range(0,1000,8) #only used when scanning thresholds
+
     #Loop through scan_fields, scan given range of values for that scan_field. 
     # Each value of scan_field makes a unique plot.
     for scan_field in scan_fields:
@@ -143,6 +142,7 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         for sf in scan_fields:
             if sf != scan_field and sf not in specials:
                 param_config_info_tmp += sf+"="+str(best_vals[sf])+","
+    
         param_config_info = param_config_info_const + param_config_info_tmp
         #disable all pixels
         print("Disable all pixels")
@@ -157,29 +157,27 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         scan_test.set_scan_range(val_ranges[scan_field])
         
         #scan_test.set_shape((8,1)) #block of 8 rows by 1 column
-        scan_test.set_shape((8,1))
+        scan_test.set_shape((1,1))
         
-        scan_test.set_topleft((112,31)) #128 rows,32 cols
+        #scan_test.set_topleft((112,31)) #128 rows,32 cols
+        scan_test.set_topleft((112,31))
         scan_test.set_ntrigs(5) #number of readout trigs separated by sleeptime
         scan_test.set_sleeptime(10) #ms
         scan_test.set_pulserStatus("OFF") #just to inform filename
+        scan_test.set_chargeInjEnabled(1) #1 is enabled, 0 prevents chargeInj's
 
         print("Enabling matrix 1")
-        scan_test.enable_block(system,chess_control)
-        #chess_control.enable_block(system,topleft=(112,31),shape=(8,1),which_matrix=1,all_matrices=False)
-        #chess_control.enable_all_pixels(system,all_matrices=True)
-        #time.sleep(1)
-
+        scan_test.enable_block(chess_control,system)
 
         if scan_field == "dac.dacBLRaw":
             scan_test.set_scan_type("baseline_scan")
-            scan_test.set_x_vals(thresholds)
+            scan_test.set_x_vals(threshold_xrange)
         elif scan_field == "dac.dacPIXTHRaw":
             scan_test.set_scan_type("threshold_scan")
-            scan_test.set_x_vals(baselines)
+            scan_test.set_x_vals(baseline_xrange)
         else: #make default x_values thresholds for now
             scan_test.set_scan_type("other_scan")
-            scan_test.set_x_vals(thresholds)
+            scan_test.set_x_vals(threshold_xrange)
             scan_test.set_fixed_baseline(744) #arbitrary (0,2000)
 
         eventReader.hitmap_show()
@@ -187,22 +185,30 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         for sf in scan_fields:
             if sf not in specials:
                 chess_control.set_val(system,sf,best_vals[sf])
-        print("Loading config file")
-        scan_test.scan(chess_control,system,eventReader,param_config_info)
+        ### PIXEL SURVEY TEST ###
+        test_pixels = []
+        for r in range(0,128,8):
+            for c in range(0,32,4):
+                test_pixels.append([r,c])	
+        for topleft in test_pixels:
+            scan_test.set_shape((1,1))
+            scan_test.set_topleft(topleft)
+            scan_test.enable_block(chess_control,system)
+            scan_test.scan(chess_control,system,eventReader,param_config_info)
+            scan_test.disable_block(chess_control,system)
     # Run gui
     appTop.exec_()
 
     # Stop mesh after gui exits
     system.stop()
     
-    return hists
 
 if __name__ == '__main__':
     rogue.Logging.setFilter('pyrogue.SrpV3', rogue.Logging.Debug)
     if len(sys.argv) == 1:
-        c2_hists = gui()
+        gui()
     elif len(sys.argv) == 3:
         #allow ip and configFile to be overwritten via commandline args
-        c2_hists = gui(ip = sys.argv[1],configFile = sys.argv[2]) 
+        gui(ip = sys.argv[1],configFile = sys.argv[2]) 
     else:
         raise("USAGE: python3 FebScriptTest_testing.py <board ip> <configFile>")

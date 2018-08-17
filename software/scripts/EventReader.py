@@ -24,6 +24,8 @@ class EventReader(rogue.interfaces.stream.Slave):
         self.ev_hitmap_t2 = np.zeros((nrows,ncols))
     def reset_data_frames(self):
         self.data_frames = []
+    def get_data_frames(self):
+        return self.data_frames
 
     def _acceptFrame(self,frame):
         p = bytearray(frame.getPayload())

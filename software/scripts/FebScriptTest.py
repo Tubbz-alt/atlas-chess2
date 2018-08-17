@@ -61,8 +61,6 @@ chess_control = ChessControl()
 
 def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
 
-    hists = []
-
     #################################################################
     # Check for PGP link
     if (ip == 'PGP'):
@@ -131,9 +129,10 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         val_ranges[f] = range(0,32)
         param_config_info_const += f+"="+str(best_vals[f])+","
     for sp in specials:        
-        val_ranges[sp] = range(700,2000+1,100) #threshold or baseline
+        #val_ranges[sp] = range(900,1400,100) #threshold or baseline
+        val_ranges[sp] = [1100]*5 #keep special val fixed
     
-    threshold_xrange = range(500,2000,8) #used when scanning bl or any param
+    threshold_xrange = range(1000,1350,8) #used when scanning bl or any param
     baseline_xrange = range(0,1000,8) #only used when scanning thresholds
 
     #Loop through scan_fields, scan given range of values for that scan_field. 
@@ -143,6 +142,7 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         for sf in scan_fields:
             if sf != scan_field and sf not in specials:
                 param_config_info_tmp += sf+"="+str(best_vals[sf])+","
+    
         param_config_info = param_config_info_const + param_config_info_tmp
         #disable all pixels
         print("Disable all pixels")
@@ -157,12 +157,14 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         scan_test.set_scan_range(val_ranges[scan_field])
         
         #scan_test.set_shape((8,1)) #block of 8 rows by 1 column
-        scan_test.set_shape((8,1))
+        scan_test.set_shape((1,1))
         
-        scan_test.set_topleft((112,31)) #128 rows,32 cols
+        #scan_test.set_topleft((112,31)) #128 rows,32 cols
+        scan_test.set_topleft((112,31))
         scan_test.set_ntrigs(5) #number of readout trigs separated by sleeptime
-        scan_test.set_sleeptime(5) #ms
+        scan_test.set_sleeptime(10) #ms
         scan_test.set_pulserStatus("OFF") #just to inform filename
+        scan_test.set_chargeInjEnabled(1) #1 is enabled, 0 prevents chargeInj's
 
         print("Enabling matrix 1")
         scan_test.enable_block(system,chess_control)
@@ -195,14 +197,13 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
     # Stop mesh after gui exits
     system.stop()
     
-    return hists
 
 if __name__ == '__main__':
     rogue.Logging.setFilter('pyrogue.SrpV3', rogue.Logging.Debug)
     if len(sys.argv) == 1:
-        c2_hists = gui()
+        gui()
     elif len(sys.argv) == 3:
         #allow ip and configFile to be overwritten via commandline args
-        c2_hists = gui(ip = sys.argv[1],configFile = sys.argv[2]) 
+        gui(ip = sys.argv[1],configFile = sys.argv[2]) 
     else:
         raise("USAGE: python3 FebScriptTest_testing.py <board ip> <configFile>")

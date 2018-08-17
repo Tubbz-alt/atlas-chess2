@@ -1,11 +1,17 @@
 
 class ChargeInj():
-	def __init__(self,matrix=1):
+	def __init__(self,matrix=1,pulse_width=4700,pulse_delay=0,inv_pulse=False,inh_pulse=1):
 		self.matrix = matrix
-		self.pulse_width = -1
-	def set_pulse_width(self,chess_control,system,pulse_width=100):
 		self.pulse_width = pulse_width
+		self.pulse_delay = pulse_delay
+		self.inv_pulse = inv_pulse #invert
+		self.inh_pulse = inh_pulse #inhibit
+		
+	def init(self,chess_control,system):
 		chess_control.set_pulse_width(system,pulse_width)
+		chess_control.set_pulse_delay(system,pulse_delay)
+		chess_control.set_inv_pulse(system,inv_pulse)
+		chess_control.set_inh_pulse(system,inh_pulse)
 	def send_pulse(self,chess_control,system):
 		chess_control.send_pulse(system)
 	def get_valid_hits(self,chess_control,system):
