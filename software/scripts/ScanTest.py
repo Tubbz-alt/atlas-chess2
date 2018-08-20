@@ -196,7 +196,7 @@ class ScanTest():
 											pulse_width=ncycles,
 											pulse_delay=0,
 											inv_pulse=False,
-											inh_pulse=1) #0=inhibit ??????????
+											inh_pulse=1) #0=inhibit ????
 				chargeInj.init(chess_control,system)
 
 		for val in self.scan_range:
@@ -210,10 +210,9 @@ class ScanTest():
 			for x in self.x_vals:
 				self.set_x_val(chess_control,system,x)
 				eventReader.hitmap_reset()
-				print("Waiting 2 seconds in Scan_test line 213")
-				time.sleep(2.0)
 				#########################
 				system.feb.sysReg.timingMode.set(0x0) #enable data stream
+				time.sleep(1.0)
 				print("taking data")
 				
 				trig_count = 0

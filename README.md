@@ -12,3 +12,5 @@ SLAC Documentation for the hardware/firmware/software can be found at:
 CERN Documentation for the CHESS2 development can be found at:
 
 > https://twiki.cern.ch/twiki/bin/view/Atlas/CHESSStripTestChip
+
+Documentation for ucsc-testing branch can be found in README.txt.

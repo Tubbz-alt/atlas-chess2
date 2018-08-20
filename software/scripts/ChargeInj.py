@@ -8,10 +8,10 @@ class ChargeInj():
 		self.inh_pulse = inh_pulse #inhibit
 		
 	def init(self,chess_control,system):
-		chess_control.set_pulse_width(system,pulse_width)
-		chess_control.set_pulse_delay(system,pulse_delay)
-		chess_control.set_inv_pulse(system,inv_pulse)
-		chess_control.set_inh_pulse(system,inh_pulse)
+		chess_control.set_pulse_width(system,self.pulse_width)
+		chess_control.set_pulse_delay(system,self.pulse_delay)
+		chess_control.set_inv_pulse(system,self.inv_pulse)
+		chess_control.set_inh_pulse(system,self.inh_pulse)
 	def send_pulse(self,chess_control,system):
 		chess_control.send_pulse(system)
 	def get_valid_hits(self,chess_control,system):

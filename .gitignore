@@ -6,7 +6,7 @@
 *.mcs
 *.ld
 *.gz
-
+*.swp
 
 # Vivado Build
 build*

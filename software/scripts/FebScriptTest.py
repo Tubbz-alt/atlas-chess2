@@ -132,7 +132,7 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         #val_ranges[sp] = range(900,1400,100) #threshold or baseline
         val_ranges[sp] = [1100]*5 #keep special val fixed
     
-    threshold_xrange = range(1000,1350,8) #used when scanning bl or any param
+    threshold_xrange = range(1000,1400,8) #used when scanning bl or any param
     baseline_xrange = range(0,1000,8) #only used when scanning thresholds
 
     #Loop through scan_fields, scan given range of values for that scan_field. 
@@ -161,16 +161,13 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         
         #scan_test.set_topleft((112,31)) #128 rows,32 cols
         scan_test.set_topleft((112,31))
-        scan_test.set_ntrigs(5) #number of readout trigs separated by sleeptime
+        scan_test.set_ntrigs(1) #number of readout trigs separated by sleeptime
         scan_test.set_sleeptime(10) #ms
         scan_test.set_pulserStatus("OFF") #just to inform filename
         scan_test.set_chargeInjEnabled(1) #1 is enabled, 0 prevents chargeInj's
 
         print("Enabling matrix 1")
-        scan_test.enable_block(system,chess_control)
-        #chess_control.enable_block(system,topleft=(112,31),shape=(8,1),which_matrix=1,all_matrices=False)
-        #chess_control.enable_all_pixels(system,all_matrices=True)
-        #time.sleep(1)
+        scan_test.enable_block(chess_control,system)
 
 
         if scan_field == "dac.dacBLRaw":
@@ -189,7 +186,6 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         for sf in scan_fields:
             if sf not in specials:
                 chess_control.set_val(system,sf,best_vals[sf])
-        print("Loading config file")
         scan_test.scan(chess_control,system,eventReader,param_config_info)
     # Run gui
     appTop.exec_()
@@ -206,4 +202,4 @@ if __name__ == '__main__':
         #allow ip and configFile to be overwritten via commandline args
         gui(ip = sys.argv[1],configFile = sys.argv[2]) 
     else:
-        raise("USAGE: python3 FebScriptTest_testing.py <board ip> <configFile>")
+        raise("USAGE: python3 FebScriptTest.py <board ip> <configFile>")
