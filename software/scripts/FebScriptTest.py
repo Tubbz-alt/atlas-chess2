@@ -185,7 +185,7 @@ def gui(arg = "192.168.4.28"):
         system.feb.chargeInj.invPulse.set(InvPulse) 
         print(a1)
         print("logging...")
-        logfile("/u1/atlas-chess2-Asic-tests/data/data_h/pre-ampdata-19/rawdata/chess2_scan_SCurveTest_"+today1+"_board_"+str(sys.argv[1])+"_run_" + str(run)+"_chargeInjectionEnbled_"+str(Qinj)+"_thN_"+str(values)+"_PulseDelay_"+str(PulseDelay)+"_rawdatacheck_nobias_hitmap.log")
+        logfile("chess2_scan_SCurveTest_"+today1+"_board_"+str(sys.argv[1])+"_run_" + str(run)+".log")
         for value in values:
             logging.info('Running the test with Values='+str(value))
             for chargeInjectionEnbled in Qinj:
@@ -205,7 +205,6 @@ def gui(arg = "192.168.4.28"):
                         for BL_value_i in BL_value:
                             hists = makeCalibCurve4( system, nCounts=100, thresholdCuts = thresholds, pixels=pixels, histFileName="scurve_test_sleep.root", deltaBLToBLR = deltaBLToBLR, chargeInjectionEnbled = chargeInjectionEnbled, BL=BL_value_i,Reading_all_pixel_together=reading_all_together,mode=real_time)
                            # create file header
-                            #headerText = "\n# Test that perform the BL and BLR voltage sweep. BLR is set as BL plus a delta voltage. (Note: ASIC V1.8a set to 1.8V again). Running with default ASIC values"
                             headerText = "\n# raw data of tests"
                             headerText = headerText + "\n# pixels, " + str(pixels)
                             headerText = headerText + "\n# chargeInjectionEnbled, " + str(chargeInjectionEnbled)
@@ -217,10 +216,9 @@ def gui(arg = "192.168.4.28"):
                             headerText = headerText + "\n# PulseWidth:"+str(PulseWidth)
                             headerText = headerText + "\n# invPulse:"+str(InvPulse)
 
-                            save_name="/u1/atlas-chess2-Asic-tests/data/data_h/pre-ampdata-"+a1+"/chess2_scan_SCurveTest_"+today1+"_board_"+str(sys.argv[1])+"_run_" +str(run)+"_BL_"+str(BL_value_i)+"_chargeInjectionEnbled_"+ str(chargeInjectionEnbled) + "_thN_"+str(hex(value))+"_Bias_-7_M1_1P_thscan"
+                            save_name="/chess2_scan_SCurveTest_"+today1+"_board_"+str(sys.argv[1])+"_run_" +str(run)+"_BL_"+str(BL_value_i)+"_chargeInjectionEnbled_"+ str(chargeInjectionEnbled) + "_thN_"
                         save_f_json(save_name,hists)
                         logging.info(headerText)
-                        logging.info("The data has been saved in \n /u1/atlas-chess2-Asic-tests/data/data_h/pre-ampdata-"+a1+save_name+".json")
                     
     
     if (QUIET_BOARD):

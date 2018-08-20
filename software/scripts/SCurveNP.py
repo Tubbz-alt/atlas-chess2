@@ -517,7 +517,7 @@ def makeCalibCurveLoopBLx_8hits(system,nCounts,thresholdCuts,pixels=None,histFil
                                     thre_buffer[matrix_i+1][thre_index]+=1
                                     hitmap_t0[row_det][col_det]+=1
                     matrix_i=1
-                    if eval(('Valid',matrix_i,hit)):
+                    if eval(get_funct('Valid',matrix_i,hit)):
                         row_det = int(eval(get_funct('row_det',matrix_i,hit)))
                         col_det = int(eval(get_funct('col_det',matrix_i,hit)))
                         time_m1=float(eval(get_funct('time_det',matrix_i,hit)))
