@@ -7,10 +7,10 @@ import time
 
 
 class Hist_Plotter:
-	hit_n_key_tmp = False
 	def __init__(self,shape,x_list,x_label,fig_title,vline_x):
 		#shape is (rows,cols) of 
 		self.x_data = [0]
+		x_list = [int(x*3300/4096) for x in x_list] #convert from channel to milivolts
 		self.x_data.extend(x_list)
 		self.x_label = x_label
 		self.fig_title = fig_title
@@ -19,14 +19,12 @@ class Hist_Plotter:
 		self.fig.suptitle(self.fig_title, fontsize=10)
 		#we want lines to have data from columns, so reshape data
 		self.lines = self.ax.plot(np.transpose(self.data))
-		self.ax.axvline(x=vline_x,ymin=0,ymax=1,color='r')
+		self.ax.axvline(x=vline_x*3300/4096,ymin=0,ymax=1,color='r')
 		self.ax.set_autoscale_on(True)
 		self.ax.set_xlim(x_list[0],x_list[-1])
 		self.ax.set_xlabel(self.x_label)
 		self.ax.set_ylabel("Hits")
 		self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
-		self.cid = self.fig.canvas.mpl_connect('key_press_event', Hist_Plotter.on_key)
-		self.hit_n_key = False
 
 	def add_data(self,data):
 		self.data = np.concatenate((self.data,data),axis=1)
@@ -36,11 +34,6 @@ class Hist_Plotter:
 
 	def close(self):
 		plt.close(self.fig)
-	
-	@staticmethod	
-	def on_key(event):
-		print('key pressed: button={0}'.format(event.key))
-		Hist_Plotter.hit_n_key_tmp = (event.key == 'n')
 	
 	def plot(self):
 		self.fig.canvas.restore_region(self.background)
@@ -61,7 +54,4 @@ class Hist_Plotter:
 		#self.ax.autoscale_view(True,True,True)
 		#plt.plot((800,800), (0, maxy), 'k-')
 		self.fig.canvas.blit(self.ax.bbox)
-		if Hist_Plotter.hit_n_key_tmp:
-			self.hit_n_key = True
-			Hist_Plotter.hit_n_key_tmp = False
 

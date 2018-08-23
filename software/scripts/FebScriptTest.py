@@ -57,7 +57,18 @@ srp = rogue.protocols.srp.SrpV3()
 appTop = PyQt4.QtGui.QApplication(sys.argv)
 guiTop = pyrogue.gui.GuiTop(group='PyRogueGui')
 system = System(guiTop, cmd, dataWriter, srp)
-chess_control = ChessControl()
+chess_control = ChessControl(system)
+eventReader = EventReader(chess_control)
+
+def init_best_vals():
+    best_vals = {}
+    best_vals["Chess2Ctrl1.VPFBatt"] = 0xa
+    best_vals["Chess2Ctrl1.VNLogicatt"] = 0x1c
+    best_vals["Chess2Ctrl1.VNSFatt"] = 0x1d
+    best_vals["Chess2Ctrl1.VNatt"] = 0x1e
+    best_vals["Chess2Ctrl1.VPLoadatt"] = 0x1e
+    best_vals["Chess2Ctrl1.VPTrimatt"] = 0xc #not very important--see 08-03_17-47
+    return best_vals
 
 def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
 
@@ -92,63 +103,59 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         pyrogue.streamConnectBiDir(srp,ethLink.application(0))
 
         # Add data stream to file as channel 1 to tDest = 0x1
-        eventReader = EventReader()
         pyrogue.streamConnect(ethLink.application(1),eventReader)
 
         #old version in below 2 lines
         #fileReader = dataWriter.getChannel(0x1)
         #pyrogue.streamConnect(ethLink.application(1),dataWriter.getChannel(0x1))
-    system.start(pollEn=True, pyroGroup=None, pyroHost=None)
-    guiTop.addTree(system)
+    chess_control.start()
+    guiTop.addTree(chess_control.system)
     guiTop.resize(800,1000)
-    system.root.ReadConfig(configFile)
+    chess_control.read_config(configFile)
     print("Loading config file")
 
     """ Performs a test on a 8x1 block of pixels """
 
     #TODO check that pktWordSize is the nb of 64b frame received
-    system.feb.sysReg.pktWordSize.set(255)
-    system.feb.sysReg.timingMode.set(0x3) #reserved
+    chess_control.set_pktWordSize(255)
 
     fields = ["Chess2Ctrl1."+x for x in ["VPTrimatt","VPLoadatt","VNatt","VNSFatt","VNLogicatt","VPFBatt"]]
-    best_vals = {}
-    best_vals["Chess2Ctrl1.VPFBatt"] = 0xa
-    best_vals["Chess2Ctrl1.VNLogicatt"] = 0x1c
-    best_vals["Chess2Ctrl1.VNSFatt"] = 0x1d
-    best_vals["Chess2Ctrl1.VNatt"] = 0x1e
-    best_vals["Chess2Ctrl1.VPLoadatt"] = 0x1e
-    best_vals["Chess2Ctrl1.VPTrimatt"] = 0xc #not very important--see 08-03_17-47
-    #val_ranges = [range(0,32) for i in range(len(val_fields))]
+    best_vals = init_best_vals()
     specials = ["dac.dacPIXTHRaw","dac.dacBLRaw"]
     #scan_fields = ["dac.dacPIXTHRaw","dac.dacBLRaw","Chess2Ctrl1.VPTrimatt"]
     scan_fields = ["dac.dacBLRaw"]
+    
     param_config_info_const = "" #never changes after this init
     val_ranges = {} #range of values to scan a given parameter key
     #init val_ranges and param_config_info_const
     for f in fields:
         val_ranges[f] = range(0,32)
         param_config_info_const += f+"="+str(best_vals[f])+","
-    for sp in specials:        
+    for sp in specials:
         #val_ranges[sp] = range(900,1400,100) #threshold or baseline
-        val_ranges[sp] = [1100]*5 #keep special val fixed
+        val_ranges[sp] = [0x2e8]*5 #keep special val fixed
     
-    threshold_xrange = range(1000,1400,8) #used when scanning bl or any param
-    baseline_xrange = range(0,1000,8) #only used when scanning thresholds
+
+    sleeptime = 2000 #ms
+    runrate = 1000 #Hz
+    
+    threshold_xrange = range(int(600*4096/3300),int(1000*4096/3300),4) #used when scanning bl or any param
+    baseline_xrange = range(0,1000,8) #only used when scanning through thresholds
 
     #Loop through scan_fields, scan given range of values for that scan_field. 
-    # Each value of scan_field makes a unique plot.
+    # Each value of scan_field makes a plot.
     for scan_field in scan_fields:
         param_config_info_tmp = "" #changes for each config file
         for sf in scan_fields:
             if sf != scan_field and sf not in specials:
                 param_config_info_tmp += sf+"="+str(best_vals[sf])+","
-    
         param_config_info = param_config_info_const + param_config_info_tmp
+
         #disable all pixels
         print("Disable all pixels")
-        chess_control.disable_all_pixels(system,all_matrices=True)
+        chess_control.disable_all_pixels(all_matrices=True)
         #disable data stream
-        system.feb.sysReg.timingMode.set(0x3) #reserved	
+        chess_control.close_stream() #opened in scan_test.scan()...	
 
         scan_test = ScanTest()
         scan_test.set_matrix(1)
@@ -160,15 +167,20 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         scan_test.set_shape((1,1))
         
         #scan_test.set_topleft((112,31)) #128 rows,32 cols
-        scan_test.set_topleft((112,31))
-        scan_test.set_ntrigs(1) #number of readout trigs separated by sleeptime
-        scan_test.set_sleeptime(10) #ms
+        scan_test.set_topleft((62,19))
+        #sleeptime = 1000/336*1000 #ms
+        scan_test.set_sleeptime(sleeptime) #ms,controls how many frames collected
+        chess_control.set_run_rate(runrate) #trigger rate is 1000Hz
         scan_test.set_pulserStatus("OFF") #just to inform filename
         scan_test.set_chargeInjEnabled(1) #1 is enabled, 0 prevents chargeInj's
-
-        print("Enabling matrix 1")
-        scan_test.enable_block(chess_control,system)
-
+        if scan_test.chargeInjEnabled:
+            scan_test.init_chargeInj(chess_control,
+                                pulse_width=15000,
+                                pulse_delay=0,
+                                inv_pulse=False, #sends a negative pulse
+                                inh_pulse=False) #can inhibit pulse
+        print("Enabling block")
+        scan_test.enable_block(chess_control)
 
         if scan_field == "dac.dacBLRaw":
             scan_test.set_scan_type("baseline_scan")
@@ -182,16 +194,17 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
             scan_test.set_fixed_baseline(744) #arbitrary (0,2000)
 
         eventReader.hitmap_show()
-        #scan through each val while keeping all other vals at config specs
-        for sf in scan_fields:
-            if sf not in specials:
-                chess_control.set_val(system,sf,best_vals[sf])
-        scan_test.scan(chess_control,system,eventReader,param_config_info)
+        #controlled scan through each val while keeping all other vals at configuration values
+        for scan_field in scan_fields:
+            if scan_field not in specials:
+                chess_control.set_val(scan_field,best_vals[scan_field])
+        scan_test.scan(chess_control,eventReader,param_config_info,runrate)
+
     # Run gui
     appTop.exec_()
 
     # Stop mesh after gui exits
-    system.stop()
+    chess_control.stop()
     
 
 if __name__ == '__main__':

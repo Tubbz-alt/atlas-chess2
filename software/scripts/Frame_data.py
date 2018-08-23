@@ -55,6 +55,7 @@ class Frame_data():
 				self.hitmap_t2[self.row_M2[-1]][self.col_M2[-1]] += self.dvflag_M2[-1]
 
 	def decode_header(self, header):
+		print("HEADER:",header)
 		self.virt_chan_id = header[0] & 0x01
 		self.dest_id      = header[0] & 0xFC
 		self.transact_id  = (header[3] <<16) & (header[2] << 8) & header[1]
