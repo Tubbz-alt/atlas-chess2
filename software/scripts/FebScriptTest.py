@@ -134,7 +134,7 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
     for sp in specials:
         #val_ranges[sp] = range(900,1400,100) #threshold or baseline
         val_ranges[sp] = [0x2e8]*5 #keep special val fixed
-    
+   	#[0x2e8,0x2e8,...] 
 
     sleeptime = 2000 #ms
     runrate = 1000 #Hz

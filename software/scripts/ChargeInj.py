@@ -12,8 +12,6 @@ class ChargeInj():
 		chess_control.set_pulse_delay(self.pulse_delay)
 		chess_control.set_inv_pulse(self.inv_pulse)
 		chess_control.set_inh_pulse(self.inh_pulse)
-	def send_pulse(self,chess_control):
-		chess_control.send_pulse()
 	def get_valid_hits(self,chess_control):
 		return chess_control.get_valid_hits(self.matrix)
 	def get_det_rows(self,chess_control):

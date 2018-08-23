@@ -204,7 +204,7 @@ class ScanTest():
 					
 					chess_control.set_run_state(1)
 					if self.chargeInjEnabled: 
-						self.chargeInj.send_pulse(chess_control)
+						chess_control.send_pulse()
 					time.sleep(self.sleeptime/1000.0)
 					chess_control.set_run_state(0)
 					#chess_control.software_trig()

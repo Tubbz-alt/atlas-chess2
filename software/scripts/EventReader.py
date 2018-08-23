@@ -33,10 +33,7 @@ class EventReader(rogue.interfaces.stream.Slave):
         frame.read(p,0)
         f = Frame_data(p)
         f.decode_frame()
-        #print("sbtemp =",f.sbtemp)
-        #print("ticks =",f.ticks)
-        if f.ticks != 0:
-            print("ticks not zero!: ticks =",f.ticks)
+        f.print_header()
         self.hitmap_update(f)
         csv_data = f.get_data()
         #csv_data = self.add_time_data(csv_data)
