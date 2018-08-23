@@ -41,7 +41,7 @@ import copyreg
 from SCurveNP import *
 from StreamReadout import *
 
-READOUT_STR = 1 # 0: register reading 1: stream readout
+READOUT_STR = 0 # 0: register reading 1: stream readout
 MAKE_S_CURVE = True
 QUIET_BOARD=False
 c2_hists = []
@@ -143,12 +143,12 @@ def gui(arg = "192.168.4.28"):
         hotpixel_m2=[(123,20)]
         print("- Stream readout mode -")
         Nframes = 1000
-        Trigger_type = [-1,1000] # -1: softTrigger, others: to be determined(LEMO trigger for now)
+        Trigger_type = [-1,1000] # [-1,1000]: [softTrigger, softTrigger rate], [1]: LEMO trigger for now)
         Pixels = None
-        Parameter_interested=['TH']
+        Parameter_interested=['TH'] #['TH': threshold sweeping, 'BL', BL sweeping] easy to expand
         #P_range=range(0x400, 0x410, 0x6)
-        P_range=range(0x258, 0x4b0, 0x6)
-        Path=""
+        P_range=range(0x258, 0x4b0, 0x6) # paramter interested range
+        Path=""  # user 
         s_name=StreamRO_concept(system, Nframes, Trigger_type, Pixels, Parameter_interested, P_range, Path, l_file, hotpixel_m0, hotpixel_m1, hotpixel_m2) 
         log_f.write() 
         l_file.close()
@@ -170,17 +170,11 @@ def gui(arg = "192.168.4.28"):
         real_time=1 # 0--turn off real-time figure 1: on 
         BL_value=[0x2e8] #BL=0.6v
         values = [6]
-        #values = [6]#, 5, 4, 3, 2, 1, 0, 7, 8, 9]
         a=sys.argv[1]
         InvPulse=False
-        #PulseDelay=0x18ff #20000ns
-        #PulseDelay=0xc7f #10000ns
         PulseDelay=0x0 #3.15ns
-        #PulseDelay=0x3e7f #50000ns
-        #PulseDelay=0x63ff #80000ns
         PulseWidth=0x12bf  #15000ns
         system.feb.chargeInj.pulseWidthRaw.set(PulseWidth)
-        #system.feb.chargeInj.pulseDelayRaw.set(0xc7f) #10000ns`
         system.feb.chargeInj.pulseDelayRaw.set(PulseDelay)
         system.feb.chargeInj.invPulse.set(InvPulse) 
         print(a1)
@@ -193,32 +187,23 @@ def gui(arg = "192.168.4.28"):
                 deltaBLToBLR = value * 120 
                 thresholds =range(0x3e1, 0x3ee, 0x1) #0.7
                 pixels=[(62,19)]
-                if 1:
-                    #if pixels!=None:
-                    #    print("    Testing Pixel: "+str(pixels))
-                        #logging.info("    Testing Pixel: "+str(pixels))
-                        #logging.info("    Testing Pixel "+str(pixels))
-                    #for pixel_i in pixels:
-                    if 1:
-                       # pixel_j=[(pixel_i[0],pixel_i[1])]
-                       # print("testing on pixel: "+str(pixel_i))
-                        for BL_value_i in BL_value:
-                            hists = makeCalibCurve4( system, nCounts=100, thresholdCuts = thresholds, pixels=pixels, histFileName="scurve_test_sleep.root", deltaBLToBLR = deltaBLToBLR, chargeInjectionEnbled = chargeInjectionEnbled, BL=BL_value_i,Reading_all_pixel_together=reading_all_together,mode=real_time)
-                           # create file header
-                            headerText = "\n# raw data of tests"
-                            headerText = headerText + "\n# pixels, " + str(pixels)
-                            headerText = headerText + "\n# chargeInjectionEnbled, " + str(chargeInjectionEnbled)
-                            headerText = headerText + "\n# deltaBLToBLR:," + str(deltaBLToBLR) 
-                            headerText = headerText + "\n# system.feb.dac.dacBLRaw:," + str(system.feb.dac.dacBLRaw.get()) 
-                            headerText = headerText + "\n# trim, " + str(7)
-                            headerText = headerText + "\n# thresholds (raw):," + str(thresholds)
-                            headerText = headerText + "\n# PulseDelay:"+str(PulseDelay)
-                            headerText = headerText + "\n# PulseWidth:"+str(PulseWidth)
-                            headerText = headerText + "\n# invPulse:"+str(InvPulse)
+                for BL_value_i in BL_value:
+                    hists = makeCalibCurve4( system, nCounts=100, thresholdCuts = thresholds, pixels=pixels, histFileName="scurve_test_sleep.root", deltaBLToBLR = deltaBLToBLR, chargeInjectionEnbled = chargeInjectionEnbled, BL=BL_value_i,Reading_all_pixel_together=reading_all_together,mode=real_time)
+                   # create file header
+                    headerText = "\n# raw data of tests"
+                    headerText = headerText + "\n# pixels, " + str(pixels)
+                    headerText = headerText + "\n# chargeInjectionEnbled, " + str(chargeInjectionEnbled)
+                    headerText = headerText + "\n# deltaBLToBLR:," + str(deltaBLToBLR) 
+                    headerText = headerText + "\n# system.feb.dac.dacBLRaw:," + str(system.feb.dac.dacBLRaw.get()) 
+                    headerText = headerText + "\n# trim, " + str(7)
+                    headerText = headerText + "\n# thresholds (raw):," + str(thresholds)
+                    headerText = headerText + "\n# PulseDelay:"+str(PulseDelay)
+                    headerText = headerText + "\n# PulseWidth:"+str(PulseWidth)
+                    headerText = headerText + "\n# invPulse:"+str(InvPulse)
 
-                            save_name="/chess2_scan_SCurveTest_"+today1+"_board_"+str(sys.argv[1])+"_run_" +str(run)+"_BL_"+str(BL_value_i)+"_chargeInjectionEnbled_"+ str(chargeInjectionEnbled) + "_thN_"
-                        save_f_json(save_name,hists)
-                        logging.info(headerText)
+                    save_name="/chess2_scan_SCurveTest_"+today1+"_board_"+str(sys.argv[1])+"_run_" +str(run)+"_BL_"+str(BL_value_i)+"_chargeInjectionEnbled_"+ str(chargeInjectionEnbled) + "_thN_"
+                    save_f_json(save_name,hists)
+                    logging.info(headerText)
                     
     
     if (QUIET_BOARD):

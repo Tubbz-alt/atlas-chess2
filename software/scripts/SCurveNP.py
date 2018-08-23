@@ -84,6 +84,7 @@ def decode(TypeOfData,data_temp,frameIndex):
             dvflag_M, mhflag_M, col_M, row_M = int((data_temp & 0x2000)>0), int((data_temp & 0x1000)>0), (data_temp & 0x0f80)>>7, data_temp & 0x007F # data_temp[13],data_temp[12],[11:7],[6:0]
     return M_det,dvflag_M,mhflag_M,col_M,row_M
 
+
 class frame_data:
     def __init__(self):
         self.dvflag_M0=[]
@@ -112,6 +113,14 @@ class frame_data:
         if dvflag_M_t!=0:
             self.comm.get(str(M_t))(dvflag_M_t, mhflag_M_t, col_M_t, row_M_t)
    
+    def add_data_with_return(self,TypeOfData,data_temp,frameIndex):
+        M_t, dvflag_M_t, mhflag_M_t, col_M_t, row_M_t=decode(TypeOfData,data_temp,frameIndex)   
+        if dvflag_M_t!=0:
+            self.comm.get(str(M_t))(dvflag_M_t, mhflag_M_t, col_M_t, row_M_t)
+            return M_t,dvflag_M_t,mhflag_M_t,col_M_t,row_M_t
+        else:
+            return 0,0,0,0,0
+
     def add_on_M0(self,dvflag_M_i, mhflag_M_i, col_M_i, row_M_i): 
         self.dvflag_M0.append(dvflag_M_i)
         self.mhflag_M0.append(mhflag_M_i)
@@ -161,15 +170,11 @@ def check_SR_file(file_o):
         frame_acquire_number.remove(frame_acquire_number[0]) 
         missed_time.append((frame_rawHeader[2] &0xffff)-t_0)
         if (frame_acquire_number[0]!=0 and frame_acquire_number[1]!=0):
-            #missed_time.append(frame_acquire_number[1]-frame_acquire_number[0]-1)
             if (frame_acquire_number[1]-frame_acquire_number[0])>1:
-                #missed_frames+=frame_acquire_number[1]-frame_acquire_number[0]-1
                 missed_frames+=1
         time_stamp_all.append(time_stamp)
 
-    #for i in range(len(time_stamp_all)-1):
-    #    print("time diff: ",time_stamp_all[i+1]-time_stamp_all[i])
-    return missed_time,missed_frames,frame_num,time_stamp_all
+    return missed_time,missed_frames,frame_num,time_stamp_all 
 
 
 def get_frame(file_o,frame_size,debug=0):
@@ -246,7 +251,7 @@ def get_frame(file_o,frame_size,debug=0):
         print("timestamp: ",timestamp)
     return frame_rawData,frame_rawHeader,frame_all,timestamp
 
-
+#data class for register reading
 class timep:
     def __init__(self,pixel1,matrix1,index1,threshold1,time1):
         self.pixel=pixel1
@@ -267,16 +272,8 @@ def binRep(num):
     binNum = bin(ctypes.c_uint.from_buffer(ctypes.c_float(num)).value)[2:]
     print("bits: " + binNum.rjust(32,"0"))
     return binNum.rjust(32,"0")
-   # mantissa = "1" + binNum[-23:]
-   # print("sig (bin): " + mantissa.rjust(24))
-   # mantInt = int(mantissa,2)/2**23
-   # print("sig (float): " + str(mantInt))
-   # base = int(binNum[-31:-23],2)-127
-   # print("base:" + str(base))
-   # sign = 1-2*("1"==binNum[-32:-31].rjust(1,"0"))
-   # print("sign:" + str(sign))
-   # print("recreate:" + str(sign*mantInt*(2**base)))
 
+#load register reading results file (.json)
 def load_chess2_data(filename):
     for i in [2]:
         file_data=open(filename,'r')
@@ -349,7 +346,7 @@ def get_values(filename):
             break
     return thresholds,PulseDelay[0],PulseWidth[0]
        
-""" The following test enables to test a set of pixels with different interested parameters, in this case"""
+""" The following test enables to test a set of pixels with different interested parameters, in this case the paramter is Threshold"""
 
 def makeCalibCurve4(system,nCounts,thresholdCuts,pixels=None,histFileName="scurve.root", deltaBLToBLR = 608, chargeInjectionEnbled = 0, BL=0x26c,Reading_all_pixel_together= False,mode=0):
     logging.info("Using makeCalibCurve4......")
@@ -358,7 +355,6 @@ def makeCalibCurve4(system,nCounts,thresholdCuts,pixels=None,histFileName="scurv
     trim = 7
     system.feb.chargeInj.calPulseInh.set(chargeInj1)
     print("Disable all pixels")
-    logging.info("Disable all pixels, eg:system.feb.Chess2Ctrl0.writeAllPixels(enable= 0,chargeInj= 1,trimI= trim)")
     system.feb.Chess2Ctrl0.writeAllPixels(enable= 0,chargeInj= 1,trimI= trim)
     system.feb.Chess2Ctrl1.writeAllPixels(enable= 0,chargeInj= 1,trimI= trim)
     system.feb.Chess2Ctrl2.writeAllPixels(enable= 0,chargeInj= 1,trimI= trim)
@@ -372,6 +368,7 @@ def makeCalibCurve4(system,nCounts,thresholdCuts,pixels=None,histFileName="scurv
         
     return hists
 
+#return an empty dictionary for the data
 def get_allHists(pixels,matrix,indexs,thresholdCuts):
     allHist={}.fromkeys(pixels)
     for pixel in pixels:
@@ -383,15 +380,6 @@ def get_allHists(pixels,matrix,indexs,thresholdCuts):
                 for threshold in thresholdCuts:
                     allHist[pixel][matri][index][threshold]=[]
     return allHist
-
-def save_f(file_name,hists):
-    with open(file_name,"w") as save_file:
-        for key in hists:
-            for key1 in hists[key]:
-                for key2 in hists[key][key1]:
-                    if hists[key][key1][key2]:
-                        save_file.writelines("pixel:{0}\nmatrix:{1}\nthreshold:{2}\nhit_time:{3}\n".format(key,key1,key2,hists[key][key1][key2]))
-    save_file.close()
 
 def dic2timep(dic):
     return timep(dic['pixel'],dic['matrix'],dic['index'],dic['threshold'],dic['time'])
@@ -413,11 +401,6 @@ def save_timep(hists):
                     one=timep(key,key1,key2,key3,hists[key][key1][key2][key3])
                     allhist.append(one)
     return allhist
-
-def print_f(file_name):
-    with open(file_name,"r") as print_file:
-        for line in print_file.readlines():
-            print(line)
 
 def makeCalibCurveLoopBLx_8hits(system,nCounts,thresholdCuts,pixels=None,histFileName="scurve.root",pixEnableLogic=1,chargeInjLogic=0,pixTrimI=0,deltaBLToBLR=608,BL_v=0x800,mode=0):
     nColumns      = 32

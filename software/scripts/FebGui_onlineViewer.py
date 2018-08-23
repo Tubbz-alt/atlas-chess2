@@ -133,26 +133,13 @@ def gui(arg = "192.168.4.28", onlineViewer = 0):
     system.start(pollEn=True, pyroGroup=None, pyroHost=None)
     guiTop.addTree(system)
     guiTop.resize(800,1000)
+    print("loading configuration ....")
     system.root.ReadConfig("/u1/home/hanyubo/atlas-chess2_b2/software/config/defaultR2_test.yml")
 
     
     
           
     # enable the pixels 
-    nRows=128
-    nColumns=32
-    pixels= None
-#    print("Disable all pixels")
-#    system.feb.Chess2Ctrl0.writeAllPixels(enable= 0,chargeInj= 1,trimI=7 )
-#    system.feb.Chess2Ctrl1.writeAllPixels(enable= 0,chargeInj= 1,trimI=7 )
-#    system.feb.Chess2Ctrl2.writeAllPixels(enable= 0,chargeInj= 1,trimI=7 )
-#
-#    pixels = pixels if (pixels!=None) else [ (row,col) for row in range(10,nRows) for col in range(10,nColumns) ]
-#    print("Enable all pixels")
-#    for (row,col) in pixels:
-#        system.feb.Chess2Ctrl0.writePixel(enable=1, chargeInj=0, col=col, row=row, trimI= 7)
-#        system.feb.Chess2Ctrl1.writePixel(enable=1, chargeInj=0, col=col, row=row, trimI= 7)
-#        system.feb.Chess2Ctrl2.writePixel(enable=1, chargeInj=0, col=col, row=row, trimI= 7)
     if (int(sys.argv[2])>0): 
         viewer = vi.Window(system)
         viewer.eventReaderMonitoring.frameIndex = 0
