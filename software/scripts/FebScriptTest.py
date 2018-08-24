@@ -173,6 +173,8 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         chess_control.set_run_rate(runrate) #trigger rate is 1000Hz
         scan_test.set_pulserStatus("OFF") #just to inform filename
         scan_test.set_chargeInjEnabled(1) #1 is enabled, 0 prevents chargeInj's
+        scan_test.set_time_plot(False) #puts time on x axis instead of threshold
+
         if scan_test.chargeInjEnabled:
             scan_test.init_chargeInj(chess_control,
                                 pulse_width=15000,

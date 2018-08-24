@@ -1,9 +1,11 @@
-from Hist_Plotter import Hist_Plotter
 import numpy as np
 from datetime import datetime
 import os
 import time
+import matplotlib.animation
 from ChargeInj import ChargeInj
+from Hist_Plotter import Hist_Plotter
+from Time_Plotter import Time_Plotter
 
 NOW = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
@@ -26,6 +28,7 @@ class ScanTest():
 		self.is_th_scan = False
 		self.is_bl_scan = False
 		self.is_other_scan = False
+		self.is_time_plot = False #puts time on x axis
 		self.x_vals = [] #list of x values
 		self.x_label = None #xaxis label
 		self.header = None #used in naming files
@@ -73,6 +76,8 @@ class ScanTest():
 			self.is_bl_scan = True
 		else: #x axis will be thresholds
 			self.is_other_scan = True
+	def set_time_plot(self,is_time_plot=False):
+		self.is_time_plot = is_time_plot
 	def set_x_vals(self,x_vals):
 		self.x_vals = x_vals
 	def save_fig(self,hist_fig):
@@ -145,6 +150,9 @@ class ScanTest():
 			self.x_label = "Threshold Voltage (mV)"
 			self.header += ",dac.dacBLRaw="+str(self.fixed_baseline)
 
+		if self.is_time_plot: #overwrite self.x_label
+			self.x_label = "Time (ns)"
+
 		if len(self.x_vals) == 0: 
 			raise("length of x_vals is zero")
 		
@@ -165,6 +173,15 @@ class ScanTest():
 			chess_control.set_threshold(x)
 	def add_data_to_hist_fig(self,hist_fig,eventReader):
 		eval("hist_fig.add_data(eventReader.plotter.data"+str(self.matrix)+"[self.topleft[0]:self.topleft[0]+self.shape[0],self.topleft[1]:self.topleft[1]+self.shape[1]])")
+
+	def add_data_to_time_fig(self,time_fig,dat):
+		#should be made to inform time_fig of m,r,c...but not necessary now
+		for hit in dat:
+			m,r,c,t = hit
+			#times range from 10ns to 100000ns, so not sure what to do
+			if t < 1000:
+				time_fig.add_hit(t)
+		
 
 	def init_chargeInj(self,chess_control,pulse_width=15000,pulse_delay=0,inv_pulse=False,inh_pulse=False):
 		dt_nano = pulse_width #ns
@@ -188,7 +205,10 @@ class ScanTest():
 			start_time = datetime.now()
 			chess_control.set_val(self.scan_field,val)
 			self.init_scan(val,runrate)
-			hist_fig = Hist_Plotter(self.shape,self.x_vals,self.x_label,self.fig_title,self.vline_x)
+			if self.is_time_plot:
+				hist_fig = Time_Plotter(self.shape,self.fig_title)
+			else:
+				hist_fig = Hist_Plotter(self.shape,self.x_vals,self.x_label,self.fig_title,self.vline_x)
 			hist_fig.show()
 			#x is threshold or baseline
 			hist_data = [] #accumulate data in this list, then save to csv file
@@ -196,19 +216,19 @@ class ScanTest():
 			try:
 				for x in self.x_vals:
 					self.set_x_val(chess_control,x)
+					time.sleep(1) #wait 1sec to settle
 					eventReader.hitmap_reset()
 					#########################
-					#chess_control.open_stream()
+					chess_control.open_stream()
 					#time.sleep(2.0)
 					print("taking data")
 					
-					chess_control.set_run_state(1)
+					#chess_control.set_run_state(1)
 					if self.chargeInjEnabled: 
 						chess_control.send_pulse()
-					time.sleep(self.sleeptime/1000.0)
-					chess_control.set_run_state(0)
-					#chess_control.software_trig()
-					#chess_control.close_stream()
+					#time.sleep(self.sleeptime/1000.0)
+					#chess_control.set_run_state(0)
+					chess_control.software_trig()
 					if self.chargeInjEnabled:
 						dat = self.chargeInj.get_data_from_pulse(chess_control)
 						#dat is at most 8 hits (len() <= 8) [[matrix,row,col,timestamp],[..],...]
@@ -218,17 +238,24 @@ class ScanTest():
 						#for hit_dat in dat:
 						#	matrix,row,col = hit_dat[:3]
 						#	exec("eventReader.ev_hitmap_t"+str(matrix)+"[row,col] += 1")
-						#eventReader.add_time_to_cs
+						#add all 8 hits to plot: x: (t1,t2,t3...), y:(nhits_t1,..)
+						#sum up all hits with same time
+						
+					chess_control.close_stream()
+					
+					dfs = eventReader.get_data_frames()
+						
 					eventReader.hitmap_plot()
 
-					self.add_data_to_hist_fig(hist_fig,eventReader)
+					if self.chargeInjEnabled and self.is_time_plot:
+						self.add_data_to_time_fig(hist_fig,dat)
+					else:
+						self.add_data_to_hist_fig(hist_fig,eventReader)
+
 					hist_fig.plot()
 
-					dfs = eventReader.get_data_frames()
-
 					#dfs = [ [ [m,r,c],[m,r,c],...], ...]
-					#print("Data frames:",dfs)
-					
+					#print("Data frames:",dfs)	
 					#Before appending to hist data, insert threshold into each pix hit
 					for i in range(len(dfs)):
 						for j in range(len(dfs[i])):
