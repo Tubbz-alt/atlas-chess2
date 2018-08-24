@@ -41,7 +41,7 @@ import copyreg
 from System import System
 from EventReader import EventReader
 from ScanTest import ScanTest
-from Hist_Plotter import Hist_Plotter
+from Thresh_Hist_Plotter import Thresh_Hist_Plotter
 from Frame_data import *
 from Hitmap_Plotter import Hitmap_Plotter
 from ChessControl import ChessControl
@@ -173,7 +173,12 @@ def gui(ip = "192.168.2.101", configFile = "../config/defaultR2_test.yml" ):
         chess_control.set_run_rate(runrate) #trigger rate is 1000Hz
         scan_test.set_pulserStatus("OFF") #just to inform filename
         scan_test.set_chargeInjEnabled(1) #1 is enabled, 0 prevents chargeInj's
-        scan_test.set_time_plot(False) #puts time on x axis instead of threshold
+        scan_test.set_nPulses(100) #how many chargeInj's per threshold
+
+        scan_test.set_time_hist(True) #puts time on x axis instead of threshold
+        scan_test.set_nbins(40)
+        
+        scan_test.set_thresh_time_plot(True)
 
         if scan_test.chargeInjEnabled:
             scan_test.init_chargeInj(chess_control,

@@ -4,13 +4,14 @@ import os
 import time
 import matplotlib.animation
 from ChargeInj import ChargeInj
-from Hist_Plotter import Hist_Plotter
-from Time_Plotter import Time_Plotter
+from Thresh_Hist_Plotter import Thresh_Hist_Plotter
+from Time_Hist_Plotter import Time_Hist_Plotter
+from Thresh_Time_Plotter import Thresh_Time_Plotter
 
 NOW = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 class ScanTest():
-	def __init__(self,matrix=0,scan_field=None,scan_range=range(0,32),shape=(8,1),topleft=(0,0),sleeptime=10,pulserStatus="ON",delta_BL_to_BLR=0x2d0,chargeInjEnabled=0):
+	def __init__(self,matrix=0,scan_field=None,scan_range=range(0,32),shape=(8,1),topleft=(0,0),sleeptime=10,pulserStatus="ON",delta_BL_to_BLR=0x2d0,chargeInjEnabled=0,nPulses=50):
 		self.matrix = matrix
 		self.scan_field = scan_field
 		self.scan_range = scan_range
@@ -21,6 +22,7 @@ class ScanTest():
 		self.delta_BL_to_BLR = delta_BL_to_BLR
 		self.chargeInjEnabled = chargeInjEnabled #1 is enabled
 		self.chargeInj = None #initialized soon
+		self.nPulses = nPulses
 
 		#below attr's are set later
 		self.fixed_baseline = None
@@ -28,8 +30,10 @@ class ScanTest():
 		self.is_th_scan = False
 		self.is_bl_scan = False
 		self.is_other_scan = False
-		self.is_time_plot = False #puts time on x axis
+		self.is_time_hist = False #puts time on x axis
+		self.is_thresh_time_plot = False #thresh vs time
 		self.x_vals = [] #list of x values
+		self.nbins = -1 #setter func used when making time plot
 		self.x_label = None #xaxis label
 		self.header = None #used in naming files
 		self.fig_title = None #title of figure
@@ -64,6 +68,8 @@ class ScanTest():
 		self.pulserStatus = pulserStatus
 	def set_chargeInjEnabled(self,b):
 		self.chargeInjEnabled = b 
+	def set_nPulses(self,n):
+		self.nPulses = n
 	def enable_block(self,chess_control):
 		chess_control.enable_block(topleft=self.topleft,shape=self.shape,which_matrix=self.matrix,all_matrices=False)
 	def disable_block(self,chess_control):
@@ -76,10 +82,15 @@ class ScanTest():
 			self.is_bl_scan = True
 		else: #x axis will be thresholds
 			self.is_other_scan = True
-	def set_time_plot(self,is_time_plot=False):
-		self.is_time_plot = is_time_plot
+	def set_time_hist(self,is_time_hist=False):
+		self.is_time_hist = is_time_hist
+	def set_thresh_time_plot(self,is_thresh_time_plot=False):
+		self.is_thresh_time_plot = is_thresh_time_plot
+		
 	def set_x_vals(self,x_vals):
 		self.x_vals = x_vals
+	def set_nbins(self,nbins):
+		self.nbins = nbins
 	def save_fig(self,hist_fig):
 		#save figure to Desktop
 		fig_filename = self.header+"_trial_1.png"
@@ -94,7 +105,7 @@ class ScanTest():
 		with open(self.config_file_dir+"/"+fig_config_filename,"w") as f:
 			f.write(field_vals_msg)
 
-	def get_config_msg(self,val,runrate,param_config_info,start_time,stop_time):
+	def get_config_msg(self,x,val,runrate,param_config_info,start_time,stop_time):
 		msg = "Start: "+start_time.strftime("%c")+"\t Stop: "+stop_time.strftime("%c")+"\n"
 		deltatime = stop_time-start_time
 		msg += "Topleft: "+str(self.topleft)+"\n"
@@ -104,12 +115,16 @@ class ScanTest():
 		msg += "Sleeptime: "+str(self.sleeptime)+"ms between trigs\n"
 		msg += "Pulser status: "+self.pulserStatus+"\n"
 		msg += "Charge injection: "+["disabled","enabled"][self.chargeInjEnabled]+"\n"
+		conv = lambda ch: int(ch*3300/4096)
 		if self.is_th_scan:
-			msg += "Threshold: "+str(int(val*3300/4096))+"mV\n"
+			msg += "Threshold: "+str(conv(val))+"mV\n"
+			msg += "Scanned thru baseline range:"+str(conv(self.x_vals[0]))+" to "+str(conv(x))+" mV\n"
 		elif self.is_bl_scan: 
-			msg += "Baseline: "+str(int(val*3300/4096))+"mV\n"
+			msg += "Baseline: "+str(conv(val))+"mV\n"
+			msg += "Scanned threshold range:"+str(conv(self.x_vals[0]))+" to "+str(conv(x))+" mV\n"
 		else: #parameter scan. write baseline because xaxis is thresholds for now
-			msg += "Baseline: "+str(int(self.fixed_baseline*3300/4096))+"mV\n"
+			msg += "Baseline: "+str(conv(self.fixed_baseline))+"mV\n"
+			msg += "Scanned threshold range:"+str(conv(self.x_vals[0]))+" to "+str(conv(x))+" mV\n"
 
 		msg += "Scan param: "+self.scan_field+"\n"
 		#now add lines specifying parameter config
@@ -150,8 +165,6 @@ class ScanTest():
 			self.x_label = "Threshold Voltage (mV)"
 			self.header += ",dac.dacBLRaw="+str(self.fixed_baseline)
 
-		if self.is_time_plot: #overwrite self.x_label
-			self.x_label = "Time (ns)"
 
 		if len(self.x_vals) == 0: 
 			raise("length of x_vals is zero")
@@ -165,23 +178,38 @@ class ScanTest():
 		
 	def set_x_val(self,chess_control,x):
 		if self.is_th_scan:
-			#BL and BLR should be 144 from each other, according to Herve, but
-				#Dionisio has 0x200 from each other as in ppt
 			chess_control.set_baseline(x)
 			chess_control.set_baseline_res(x+self.delta_BL_to_BLR)
 		else: #bl_scan or other, either way xaxis is thresholds
 			chess_control.set_threshold(x)
-	def add_data_to_hist_fig(self,hist_fig,eventReader):
-		eval("hist_fig.add_data(eventReader.plotter.data"+str(self.matrix)+"[self.topleft[0]:self.topleft[0]+self.shape[0],self.topleft[1]:self.topleft[1]+self.shape[1]])")
+	
+	def add_data_to_thresh_hist_fig(self,figs,eventReader):
+		for fig in figs:
+			if fig.__class__.__name__ == "Thresh_Hist_Plotter":
+				eval("fig.add_data(eventReader.plotter.data"+str(self.matrix)+"[self.topleft[0]:self.topleft[0]+self.shape[0],self.topleft[1]:self.topleft[1]+self.shape[1]])")
 
-	def add_data_to_time_fig(self,time_fig,dat):
+	def add_data_to_time_hist_fig(self,time_hist_fig,dat):
 		#should be made to inform time_fig of m,r,c...but not necessary now
 		for hit in dat:
 			m,r,c,t = hit
-			#times range from 10ns to 100000ns, so not sure what to do
-			if t < 1000:
-				time_fig.add_hit(t)
-		
+			time_hist_fig.add_hit(t)
+	
+	def add_data_to_thresh_time_fig(self,thresh_time_fig,dat,x):
+		for hit in dat:
+			m,r,c,t = hit
+			thresh_time_fig.add_data(t,x)
+				
+	def add_data_to_time_figs(self,figs,dat,x):
+		for fig in figs:
+			which_fig = fig.__class__.__name__
+			if which_fig == "Time_Hist_Plotter" and self.chargeInjEnabled and self.is_time_hist:
+				#make hits vs time
+				self.add_data_to_time_hist_fig(fig,dat)
+			elif which_fig == "Thresh_Time_Plotter" and self.chargeInjEnabled and self.is_thresh_time_plot:
+				#add data to thresh vs time fig
+				self.add_data_to_thresh_time_fig(fig,dat,x)
+			else:
+				pass #ignore Thresh_hist_fig
 
 	def init_chargeInj(self,chess_control,pulse_width=15000,pulse_delay=0,inv_pulse=False,inh_pulse=False):
 		dt_nano = pulse_width #ns
@@ -205,11 +233,16 @@ class ScanTest():
 			start_time = datetime.now()
 			chess_control.set_val(self.scan_field,val)
 			self.init_scan(val,runrate)
-			if self.is_time_plot:
-				hist_fig = Time_Plotter(self.shape,self.fig_title)
-			else:
-				hist_fig = Hist_Plotter(self.shape,self.x_vals,self.x_label,self.fig_title,self.vline_x)
-			hist_fig.show()
+			figs = []
+			if self.is_time_hist:
+				figs.append(Time_Hist_Plotter(self.shape,self.fig_title,self.nbins))
+			if self.is_thresh_time_plot:
+				figs.append(Thresh_Time_Plotter(self.shape,self.fig_title))
+			
+			figs.append(Thresh_Hist_Plotter(self.shape,self.x_vals,self.x_label,self.fig_title,self.vline_x))
+
+			for fig in figs: 
+				fig.show()
 			#x is threshold or baseline
 			hist_data = [] #accumulate data in this list, then save to csv file
 			hit_control_c = False
@@ -219,41 +252,40 @@ class ScanTest():
 					time.sleep(1) #wait 1sec to settle
 					eventReader.hitmap_reset()
 					#########################
-					chess_control.open_stream()
-					#time.sleep(2.0)
-					print("taking data")
-					
-					#chess_control.set_run_state(1)
-					if self.chargeInjEnabled: 
-						chess_control.send_pulse()
-					#time.sleep(self.sleeptime/1000.0)
-					#chess_control.set_run_state(0)
-					chess_control.software_trig()
-					if self.chargeInjEnabled:
-						dat = self.chargeInj.get_data_from_pulse(chess_control)
-						#dat is at most 8 hits (len() <= 8) [[matrix,row,col,timestamp],[..],...]
+					for pulse_ind in range(self.nPulses):
+						chess_control.open_stream()
+						#time.sleep(2.0)
+						print("taking data")
+						
+						#chess_control.set_run_state(1)
+						if self.chargeInjEnabled: 
+							chess_control.send_pulse()
+						#time.sleep(self.sleeptime/1000.0)
+						#chess_control.set_run_state(0)
+						chess_control.software_trig()
+						if self.chargeInjEnabled:
+							dat = self.chargeInj.get_data_from_pulse(chess_control)
+							#dat is at most 8 hits (len() <= 8) [[matrix,row,col,timestamp],[..],...]
 
-						print("Pulse data:",dat)
-						#add chargeInj pulses to hitmap ?? this seems redundant
-						#for hit_dat in dat:
-						#	matrix,row,col = hit_dat[:3]
-						#	exec("eventReader.ev_hitmap_t"+str(matrix)+"[row,col] += 1")
-						#add all 8 hits to plot: x: (t1,t2,t3...), y:(nhits_t1,..)
-						#sum up all hits with same time
+							print("Pulse data:",dat)
+							#add chargeInj pulses to hitmap ?? this seems redundant
+							#for hit_dat in dat:
+							#	matrix,row,col = hit_dat[:3]
+							#	exec("eventReader.ev_hitmap_t"+str(matrix)+"[row,col] += 1")
+							#add all 8 hits to plot: x: (t1,t2,t3...), y:(nhits_t1,..)
+							#sum up all hits with same time
 						
-					chess_control.close_stream()
+						chess_control.close_stream()
+						self.add_data_to_time_figs(figs,dat,x)
 					
-					dfs = eventReader.get_data_frames()
-						
+					self.add_data_to_thresh_hist_fig(figs,eventReader)
+
+					#plot after all pulses			
 					eventReader.hitmap_plot()
-
-					if self.chargeInjEnabled and self.is_time_plot:
-						self.add_data_to_time_fig(hist_fig,dat)
-					else:
-						self.add_data_to_hist_fig(hist_fig,eventReader)
-
-					hist_fig.plot()
-
+					for fig in figs:
+						fig.plot()
+					dfs = eventReader.get_data_frames()
+							
 					#dfs = [ [ [m,r,c],[m,r,c],...], ...]
 					#print("Data frames:",dfs)	
 					#Before appending to hist data, insert threshold into each pix hit
@@ -263,8 +295,10 @@ class ScanTest():
 					#dfs = [ [ [x,m1,r1,c1],[x,m2,r2,c2],...], ...]
 					if len(dfs) > 0: 
 						hist_data.append(dfs)
+					
 					eventReader.reset_data_frames()
 
+	
 			except KeyboardInterrupt:
 				#save what you have, then break out of scan
 				hit_control_c = True 
@@ -275,11 +309,12 @@ class ScanTest():
 
 			#save plots,configs,and csvs
 			stop_time = datetime.now()
-			self.save_fig(hist_fig)
-			config_msg = self.get_config_msg(val,runrate,param_config_info,start_time,stop_time)
+			config_msg = self.get_config_msg(x,val,runrate,param_config_info,start_time,stop_time)
 			self.save_fig_config(config_msg)
-			hist_fig.close()
-			del hist_fig
+			for fig in figs:
+				self.save_fig(fig)
+				fig.close()
+				del fig
 			#save csv files with data from hist_data
 			self.save_data_to_csv(hist_data)
 

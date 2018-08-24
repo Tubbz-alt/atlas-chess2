@@ -6,11 +6,12 @@ import sys
 import time
 
 
-class Hist_Plotter:
+class Thresh_Hist_Plotter:
 	def __init__(self,shape,x_list,x_label,fig_title,vline_x):
 		#shape is (rows,cols)
 		self.x_data = [0]
-		x_list = [int(x*3300/4096) for x in x_list] #convert from channel to milivolts
+		conv = lambda ch: int(ch*3300/4096)
+		x_list = [conv(x) for x in x_list] #convert from channel to milivolts
 		self.x_data.extend(x_list)
 		self.x_label = x_label
 		self.fig_title = fig_title
@@ -20,7 +21,7 @@ class Hist_Plotter:
 		self.fig.suptitle(self.fig_title, fontsize=10)
 		#we want lines to have data from columns, so reshape data
 		self.lines = self.ax.plot(np.transpose(self.data))
-		self.ax.axvline(x=vline_x*3300/4096,ymin=0,ymax=1,color='r')
+		self.ax.axvline(x=conv(vline_x),ymin=0,ymax=1,color='r')
 		self.ax.set_autoscale_on(True)
 		self.ax.set_xlim(x_list[0],x_list[-1])
 		self.ax.set_xlabel(self.x_label)
