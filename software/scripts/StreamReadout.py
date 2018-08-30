@@ -17,7 +17,7 @@ from matplotlib import ticker
 import scipy.io as sio
 from threading import Timer
 
-def StreamRO_concept(system, nFrames, trigger_type, pixels, parameters_interested ,interested_range,save_path_name, file_l, hotpixel_m0, hotpixel_m1, hotpixel_m2):
+def StreamRO_concept(system, nFrames, trigger_type, pixels, parameters_interested ,interested_range,save_path_name, file_l, hotpixel_m0, hotpixel_m1, hotpixel_m2, Run_number):
     nColums = 32
     nRows   =128
     trim = 7
@@ -31,7 +31,7 @@ def StreamRO_concept(system, nFrames, trigger_type, pixels, parameters_intereste
     print("Disable all pixels :"+str(t2-t1)+" s")
     
     t1=time.time() 
-    pixels = pixels if (pixels!=None) else [ (row,col) for row in range(20,128,1) for col in range(5,32,1) ]
+    pixels = pixels if (pixels!=None) else [ (row,col) for row in range(0,128,1) for col in range(0,32,1) ]
     for (row,col) in pixels:
         if ((row,col) not in hotpixel_m0):
             system.feb.Chess2Ctrl0.writePixel(enable = 1, chargeInj = 0, col=col, row=row, trimI=trim)   
@@ -44,11 +44,11 @@ def StreamRO_concept(system, nFrames, trigger_type, pixels, parameters_intereste
     
     if len(trigger_type) == 2:
         for parameter in parameters_interested:
-            save_fname=save_path_name+"StreamRO_softTrigger_"+today1+"_"+str(parameter)
+            save_fname=save_path_name+"StreamRO_softTrigger_Run"+Run_number+"_"+today1+"_"+str(parameter)
             StreamRO_SoftTrigger(system, nFrames, save_fname, parameter, interested_range, file_l, Trigger_r=trigger_type[1])
     else:
         for parameter in parameters_interested:
-            save_fname=save_path_name+"StreamRO_externalTrigger_"+today1+"_"+str(parameter)
+            save_fname=save_path_name+"StreamRO_externalTrigger_Run"+Run_number+"_"+today1+"_"+str(parameter)
             StreamRO_ExternalTrigger(system, nFrames, save_fname, parameter, interested_range, file_l)
     return save_fname
 
@@ -71,7 +71,6 @@ def StreamRO_SoftTrigger(system, nFrames, save_fname, parameter, interested_rang
         eval(set_parameter(parameter,i))
         time.sleep(1.0)
         system.runControl.runState.set(1) #0 - 'Stopped'; 1 - 'Running'
-        system.feb.chargeInj.calPulse.set(1)
         time.sleep(timer_repeat)
         #Timer_t=Timer(timer_repeat,system.runControl.runState.set(0))
         system.runControl.runState.set(0)
