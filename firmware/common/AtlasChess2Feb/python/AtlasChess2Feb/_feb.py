@@ -42,13 +42,16 @@ class feb(pr.Device):
         #############
         # Add devices
         #############
-        self.add(axi.AxiVersion(                            offset=0x00000000,expand=False))
-        self.add(xilinx.Xadc(                               offset=0x00010000,expand=False))  
-        self.add(AtlasChess2Feb.sysReg(   name="sysReg",    offset=0x00030000,expand=False))    
-        self.add(AtlasChess2Feb.memReg(   name="memReg",    offset=0x00040000,expand=True))    
+        self.add(axi.AxiVersion(                                offset=0x00000000,expand=False))
+        self.add(xilinx.Xadc(                                   offset=0x00010000,expand=False))  
+        self.add(AtlasChess2Feb.sysReg(      name="sysReg",        offset=0x00030000,expand=False))    
+        self.add(AtlasChess2Feb.memReg(      name="memReg",        offset=0x00040000,expand=True))    
         #self.add(AtlasChess2Feb.iobuff(   name="iobuff",    offset=0x00500000,expand=False))    
-        self.add(AtlasChess2Feb.dac(      name="dac",       offset=0x00100000,expand=False))                
-        self.add(AtlasChess2Feb.chargeInj(name="chargeInj", offset=0x00330000,expand=False))   
+        self.add(AtlasChess2Feb.dac(         name="dac",           offset=0x00100000,expand=False)) 
+        self.add(AtlasChess2Feb.asicRxIDelay(name="Matrix0IDelay", offset=0x00300000,expand=False))
+        self.add(AtlasChess2Feb.asicRxIDelay(name="Matrix1IDelay", offset=0x00310000,expand=False))        
+        self.add(AtlasChess2Feb.asicRxIDelay(name="Matrix2IDelay", offset=0x00320000,expand=False))                
+        self.add(AtlasChess2Feb.chargeInj(   name="chargeInj",     offset=0x00330000,expand=False))   
                 
         for i in range(3):
             self.add(AtlasChess2Feb.Chess2Array( 
