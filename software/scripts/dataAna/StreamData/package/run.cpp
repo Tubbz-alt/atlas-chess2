@@ -18,12 +18,17 @@
 #include <TH3D.h>
 
 
+<<<<<<< HEAD
 int file_number(std::string name);
 std::string file_name(std::string name);
+=======
+int file_number(char* name);
+>>>>>>> c++ package to deal with the stream readout result
 int main(int argc, char* argv[]){
 
     std::string configure_f;
     std::string data_f;
+<<<<<<< HEAD
     std::string save_name;
     FILE *file;
     if (argc==2){
@@ -35,6 +40,16 @@ int main(int argc, char* argv[]){
     }
     int num=0;
     num=file_number(save_name);
+=======
+    FILE *file;
+    if (argc==2){
+        std::string txt=".txt";
+        configure_f=argv[1]+txt;
+        std::cout<<"--- the configure file"<<configure_f<<std::endl;
+    }
+    int num=0;
+    num=file_number(argv[1]);
+>>>>>>> c++ package to deal with the stream readout result
     ReadConfigure::ReadConfigure *conf=new ReadConfigure::ReadConfigure(configure_f);
 
     int Steps;
@@ -52,7 +67,11 @@ int main(int argc, char* argv[]){
    // struct Frame_Header frame_Header;
    // struct Atlas_chess2_header ach;
    // struct Payload payload;
+<<<<<<< HEAD
     char file_name_s[1000];
+=======
+    char file_name[200];
+>>>>>>> c++ package to deal with the stream readout result
     
    
     TH2D* M_0_step[Steps];  
@@ -94,9 +113,15 @@ int main(int argc, char* argv[]){
     DataClass::DataClass *data_t = new DataClass::DataClass();
     for (int file_n=1; file_n<num+1 ;file_n++){
         
+<<<<<<< HEAD
         sprintf(file_name_s,"%s.dat.%d",save_name.c_str(),file_n);
         std::cout<<"reading :"<<file_name_s<< std::endl;
         file = fopen(file_name_s,"rb");
+=======
+        sprintf(file_name,"%s.dat.%d",argv[1],file_n);
+        std::cout<<"reading :"<<file_name<< std::endl;
+        file = fopen(file_name,"rb");
+>>>>>>> c++ package to deal with the stream readout result
         
         while(get_next_frame(file,&frame)==0){
             if (frame.payload_size!=0){
@@ -150,9 +175,15 @@ int main(int argc, char* argv[]){
         //delete_frame(&frame);
     }
     //fclose(stream);
+<<<<<<< HEAD
     char save_name_root[100];
     sprintf(save_name_root,"%s_cpackage.root",save_name.c_str());
     TFile *file_r=TFile::Open(save_name_root,"RECREATE");   
+=======
+    char save_name[100];
+    sprintf(save_name,"%s_cpackage.root",argv[1])
+    TFile *file_r=TFile::Open(save_name,"RECREATE");   
+>>>>>>> c++ package to deal with the stream readout result
     for (int f=0;f<hist;f++){
     M_0_step[f]->Write();
     M_1_step[f]->Write();
@@ -172,6 +203,7 @@ int main(int argc, char* argv[]){
     return 1;
     
 }
+<<<<<<< HEAD
 std::string file_name(std::string name){
    size_t pos=name.find(".txt");
    std::string save_name=name.substr(0,pos);
@@ -184,6 +216,14 @@ int file_number(std::string name){
     while (true){
 	number+=1;
         sprintf(name_temp,"%s.dat.%d",name.c_str(),number);
+=======
+int file_number(char* name){
+    char name_temp[200];
+    int number = 0;
+    while (true){
+	number+=1;
+        sprintf(name_temp,"%s.dat.%d",name,number);
+>>>>>>> c++ package to deal with the stream readout result
         if ((access(name_temp,F_OK))!= -1){
           //  std::cout<<((access(name_temp,F_OK))!= -1)<<std::endl;
         }
