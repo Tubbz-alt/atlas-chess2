@@ -17,10 +17,10 @@ from matplotlib import ticker
 import scipy.io as sio
 from threading import Timer
 
-def StreamRO_concept(system, nFrames, trigger_type, pixels, parameters_interested ,interested_range,save_path_name, file_l, hotpixel_m0, hotpixel_m1, hotpixel_m2, Run_number):
+def StreamRO_concept(system,Run_number, nFrames, trigger_type, pixels, parameters_interested ,interested_range,save_path_name, file_l, hotpixel_m0, hotpixel_m1, hotpixel_m2, Trim):
     nColums = 32
     nRows   =128
-    trim = 7
+    trim = Trim
     today1=time.strftime("%Y%m%d_%H%M%S",time.localtime())
     
     t1=time.time() 

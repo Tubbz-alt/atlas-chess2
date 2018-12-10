@@ -41,7 +41,7 @@ import copyreg
 from SCurveNP import *
 from StreamReadout import *
 
-READOUT_STR = 0 # 0: register reading 1: stream readout
+READOUT_STR = 1 # 0: register reading 1: stream readout
 MAKE_S_CURVE = True
 QUIET_BOARD=False
 c2_hists = []
@@ -126,38 +126,49 @@ def gui(arg = "192.168.4.28"):
     system.start(pollEn=True, pyroGroup=None, pyroHost=None)
     guiTop.addTree(system)
     guiTop.resize(800,1000)
-   
-    log_file="log_all.log"
-    log_f = open(log_file,"a")
-    description = input("Describe the test:\n")
-    path_l="configure_log.txt"
-    l_file = open(path_l,"w")
-    save_configureFile(l_file,"../config/defaultR2_test.yml"); 
-    system.root.ReadConfig("../config/defaultR2_test.yml")
-    print("- Loading config file....")
-    #time1=datetime.datetime.now()
-    time1=time.time()
-    if (READOUT_STR==1):
-        hotpixel_m0=[]
-        hotpixel_m1=[]
-        hotpixel_m2=[(123,20)]
-        print("- Stream readout mode -")
-        Nframes = 1000
-        Trigger_type = [-1,1000] # [-1,1000]: [softTrigger, softTrigger rate], [1]: LEMO trigger for now)
-        Pixels = None
-        Parameter_interested=['TH'] #['TH': threshold sweeping, 'BL', BL sweeping] easy to expand
-        #P_range=range(0x400, 0x410, 0x6)
-        P_range=range(0x258, 0x4b0, 0x6) # paramter interested range
-        Path=""  # user 
-        s_name=StreamRO_concept(system, Nframes, Trigger_type, Pixels, Parameter_interested, P_range, Path, l_file, hotpixel_m0, hotpixel_m1, hotpixel_m2) 
-        log_f.write() 
-        l_file.close()
-        os.rename(path_l,s_name+'.txt')
-        #time2=datetime.datetime.now()
-        log_f.write(s_name+" :\n")
-        log_f.write("--- "+description+"\n")
-        log_f.close()
-        print("finished in "+str(time2-time1)+" seconds")
+
+    for col_t in range(0,32):
+        #for adds in range(14,15):
+        for adds in range(0,16,1):
+            Pixels=[(r+adds,col_t) for r in range(0,128,16) ]
+            path_l="/u1/atlas-chess2-Asic-tests/data/data_h/StreamReadout/configure_log.txt"
+            l_file = open(path_l,"w")
+            save_configureFile(l_file,"/u1/home/hanyubo/atlas-chess2_b2/software/config/default_after_cali1126.yml")
+            system.root.ReadConfig("/u1/home/hanyubo/atlas-chess2_b2/software/config/default_after_cali1126.yml")
+            #save_configureFile(l_file,"/u1/home/hanyubo/atlas-chess2_b2/software/config/defaultR2_test.yml")
+            #system.root.ReadConfig("/u1/home/hanyubo/atlas-chess2_b2/software/config/defaultR2_test.yml")
+            print("- Loading config file....")
+            #time1=datetime.datetime.now()
+            time1=time.time()
+            if (READOUT_STR==1):
+                logFile=open("/u1/atlas-chess2-Asic-tests/data/data_h/StreamReadout/log_all_20181204.txt","a")       
+                #description = input("- describe the test: -\n")
+                description = "1.5V select 12 steps: "+str(Pixels)
+                Trim=7
+                Run_Number=12
+                Nframes = 1000
+                Trigger_type = [1] # -1: softTrigger, others: to be determined(LEMO trigger for now)
+                #Pixels = None
+                #P_range=range(818,978,2)
+                P_range=[810,820,830,835,840,845,850,860,880,900,920,960]
+                #P_range=range(818,920,2) #No Qinj
+                Parameter_interested=['TH']
+                hotpixel_m0=[]
+                hotpixel_m1=[(127,31)]
+                hotpixel_m2=[(123,20)]
+
+                print("- Stream readout mode -")
+                print("- test on "+str(Pixels))
+                Path="/u1/atlas-chess2-Asic-tests/data/data_h/StreamReadout/DaughterBoard_01/"
+                s_name=StreamRO_concept(system,Run_Number, Nframes, Trigger_type, Pixels, Parameter_interested, P_range, Path, l_file, hotpixel_m0, hotpixel_m1, hotpixel_m2,Trim) 
+
+                l_file.close()
+                os.rename(path_l,s_name+'.txt')
+                #time2=datetime.datetime.now()
+                logFile.write(s_name+" :\n")
+                logFile.write(description+"\n")
+                time2=time.time()
+                print("finished in "+str(time2-time1)+" seconds")
 
 
     if (MAKE_S_CURVE and READOUT_STR==0):
@@ -170,16 +181,22 @@ def gui(arg = "192.168.4.28"):
         real_time=1 # 0--turn off real-time figure 1: on 
         BL_value=[0x2e8] #BL=0.6v
         values = [6]
+        #values = [6]#, 5, 4, 3, 2, 1, 0, 7, 8, 9]
         a=sys.argv[1]
         InvPulse=False
+        #PulseDelay=0x18ff #20000ns
+        #PulseDelay=0xc7f #10000ns
         PulseDelay=0x0 #3.15ns
+        #PulseDelay=0x3e7f #50000ns
+        #PulseDelay=0x63ff #80000ns
         PulseWidth=0x12bf  #15000ns
         system.feb.chargeInj.pulseWidthRaw.set(PulseWidth)
+        #system.feb.chargeInj.pulseDelayRaw.set(0xc7f) #10000ns`
         system.feb.chargeInj.pulseDelayRaw.set(PulseDelay)
         system.feb.chargeInj.invPulse.set(InvPulse) 
         print(a1)
         print("logging...")
-        logfile("chess2_scan_SCurveTest_"+today1+"_board_"+str(sys.argv[1])+"_run_" + str(run)+".log")
+        logfile("/u1/atlas-chess2-Asic-tests/data/data_h/pre-ampdata-19/rawdata/chess2_scan_SCurveTest_"+today1+"_board_"+str(sys.argv[1])+"_run_" + str(run)+"_chargeInjectionEnbled_"+str(Qinj)+"_thN_"+str(values)+"_PulseDelay_"+str(PulseDelay)+"_rawdatacheck_nobias_hitmap.log")
         for value in values:
             logging.info('Running the test with Values='+str(value))
             for chargeInjectionEnbled in Qinj:
@@ -187,23 +204,34 @@ def gui(arg = "192.168.4.28"):
                 deltaBLToBLR = value * 120 
                 thresholds =range(0x3e1, 0x3ee, 0x1) #0.7
                 pixels=[(62,19)]
-                for BL_value_i in BL_value:
-                    hists = makeCalibCurve4( system, nCounts=100, thresholdCuts = thresholds, pixels=pixels, histFileName="scurve_test_sleep.root", deltaBLToBLR = deltaBLToBLR, chargeInjectionEnbled = chargeInjectionEnbled, BL=BL_value_i,Reading_all_pixel_together=reading_all_together,mode=real_time)
-                   # create file header
-                    headerText = "\n# raw data of tests"
-                    headerText = headerText + "\n# pixels, " + str(pixels)
-                    headerText = headerText + "\n# chargeInjectionEnbled, " + str(chargeInjectionEnbled)
-                    headerText = headerText + "\n# deltaBLToBLR:," + str(deltaBLToBLR) 
-                    headerText = headerText + "\n# system.feb.dac.dacBLRaw:," + str(system.feb.dac.dacBLRaw.get()) 
-                    headerText = headerText + "\n# trim, " + str(7)
-                    headerText = headerText + "\n# thresholds (raw):," + str(thresholds)
-                    headerText = headerText + "\n# PulseDelay:"+str(PulseDelay)
-                    headerText = headerText + "\n# PulseWidth:"+str(PulseWidth)
-                    headerText = headerText + "\n# invPulse:"+str(InvPulse)
+                if 1:
+                    #if pixels!=None:
+                    #    print("    Testing Pixel: "+str(pixels))
+                        #logging.info("    Testing Pixel: "+str(pixels))
+                        #logging.info("    Testing Pixel "+str(pixels))
+                    #for pixel_i in pixels:
+                    if 1:
+                       # pixel_j=[(pixel_i[0],pixel_i[1])]
+                       # print("testing on pixel: "+str(pixel_i))
+                        for BL_value_i in BL_value:
+                            hists = makeCalibCurve4( system, nCounts=100, thresholdCuts = thresholds, pixels=pixels, histFileName="scurve_test_sleep.root", deltaBLToBLR = deltaBLToBLR, chargeInjectionEnbled = chargeInjectionEnbled, BL=BL_value_i,Reading_all_pixel_together=reading_all_together,mode=real_time)
+                           # create file header
+                            #headerText = "\n# Test that perform the BL and BLR voltage sweep. BLR is set as BL plus a delta voltage. (Note: ASIC V1.8a set to 1.8V again). Running with default ASIC values"
+                            headerText = "\n# raw data of tests"
+                            headerText = headerText + "\n# pixels, " + str(pixels)
+                            headerText = headerText + "\n# chargeInjectionEnbled, " + str(chargeInjectionEnbled)
+                            headerText = headerText + "\n# deltaBLToBLR:," + str(deltaBLToBLR) 
+                            headerText = headerText + "\n# system.feb.dac.dacBLRaw:," + str(system.feb.dac.dacBLRaw.get()) 
+                            headerText = headerText + "\n# trim, " + str(7)
+                            headerText = headerText + "\n# thresholds (raw):," + str(thresholds)
+                            headerText = headerText + "\n# PulseDelay:"+str(PulseDelay)
+                            headerText = headerText + "\n# PulseWidth:"+str(PulseWidth)
+                            headerText = headerText + "\n# invPulse:"+str(InvPulse)
 
-                    save_name="/chess2_scan_SCurveTest_"+today1+"_board_"+str(sys.argv[1])+"_run_" +str(run)+"_BL_"+str(BL_value_i)+"_chargeInjectionEnbled_"+ str(chargeInjectionEnbled) + "_thN_"
-                    save_f_json(save_name,hists)
-                    logging.info(headerText)
+                            save_name="/u1/atlas-chess2-Asic-tests/data/data_h/pre-ampdata-"+a1+"/chess2_scan_SCurveTest_"+today1+"_board_"+str(sys.argv[1])+"_run_" +str(run)+"_BL_"+str(BL_value_i)+"_chargeInjectionEnbled_"+ str(chargeInjectionEnbled) + "_thN_"+str(hex(value))+"_Bias_-7_M1_1P_thscan"
+                        save_f_json(save_name,hists)
+                        logging.info(headerText)
+                        logging.info("The data has been saved in \n /u1/atlas-chess2-Asic-tests/data/data_h/pre-ampdata-"+a1+save_name+".json")
                     
     
     if (QUIET_BOARD):
