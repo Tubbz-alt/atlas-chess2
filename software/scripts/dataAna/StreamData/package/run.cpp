@@ -46,48 +46,79 @@ int main(int argc, char* argv[]){
     parameters=conf->getParameterValues();
     paramter_name=conf->getParameterChanged();
    
-    //for (int y=0;y<frames.size();y++){std::cout<< frames[y]<<std::endl;} 
-    //for (int y=0;y<parameters.size();y++){std::cout<< parameters[y]<<std::endl;} 
     struct Frame frame;
-   // struct Frame_Header frame_Header;
-   // struct Atlas_chess2_header ach;
-   // struct Payload payload;
     char file_name_s[1000];
     
    
-    TH2D* M_0_step[Steps];  
-    TH2D* M_1_step[Steps];  
-    TH2D* M_2_step[Steps];  
+ //   TH2D* M_0_step[Steps];  
+ //   TH2D* M_1_step[Steps];  
+ //   TH2D* M_2_step[Steps];  
    
-    char m0_n[200],m1_n[200],m2_n[200];
-    for(int m=0;m<Steps;m++){ 
-    sprintf(m0_n,"Matrix0_2D_HitMap_with_TH_at_%d",parameters[m]);
-    M_0_step[m]= new TH2D(m0_n,";Col;Row",32,0,32,128,0,128);
-    sprintf(m1_n,"Matrix1_2D_HitMap_with_TH_at_%d",parameters[m]);
-    M_1_step[m]= new TH2D(m1_n,";Col;Row",32,0,32,128,0,128);
-    sprintf(m2_n,"Matrix2_2D_HitMap_with_TH_at_%d",parameters[m]);
-    M_2_step[m]= new TH2D(m2_n,";Col;Row",32,0,32,128,0,128);
-    }
-    Hitmap::Hitmap *h0 =  new Hitmap::Hitmap();
-    Hitmap::Hitmap *h1 =  new Hitmap::Hitmap();
-    Hitmap::Hitmap *h2 =  new Hitmap::Hitmap();
-    
-    TH2D *M_0_all= new TH2D("Matrix0_2D_HitMap",";Col;Row",32,0,32,128,0,128);
-    TH2D *M_1_all= new TH2D("Matrix1_2D_HitMap",";Col;Row",32,0,32,128,0,128);
-    TH2D *M_2_all= new TH2D("Matrix2_2D_HitMap",";Col;Row",32,0,32,128,0,128);
-  
-    char h_3d[100];
-    sprintf(h_3d,";Col;Row;TH");
-    int p_end=parameters[Steps-1];
-    TH3D *M_0_3d= new TH3D("Matrix0_3D_HitMap",h_3d,32,0,32,128,0,128,Steps,parameters[0],p_end);
-    TH3D *M_1_3d= new TH3D("Matrix1_3D_HitMap",h_3d,32,0,32,128,0,128,Steps,parameters[0],p_end);
-    TH3D *M_2_3d= new TH3D("Matrix2_3D_HitMap",h_3d,32,0,32,128,0,128,Steps,parameters[0],p_end);
+ //   char m0_n[200],m1_n[200],m2_n[200];
+ //   for(int m=0;m<Steps;m++){ 
+ //   sprintf(m0_n,"Matrix0_2D_HitMap_with_TH_at_%d",parameters[m]);
+ //   M_0_step[m]= new TH2D(m0_n,";Col;Row",32,0,32,128,0,128);
+ //   sprintf(m1_n,"Matrix1_2D_HitMap_with_TH_at_%d",parameters[m]);
+ //   M_1_step[m]= new TH2D(m1_n,";Col;Row",32,0,32,128,0,128);
+ //   sprintf(m2_n,"Matrix2_2D_HitMap_with_TH_at_%d",parameters[m]);
+ //   M_2_step[m]= new TH2D(m2_n,";Col;Row",32,0,32,128,0,128);
+ //   }
+ //   Hitmap::Hitmap *h0 =  new Hitmap::Hitmap();
+ //   Hitmap::Hitmap *h1 =  new Hitmap::Hitmap();
+ //   Hitmap::Hitmap *h2 =  new Hitmap::Hitmap();
+ //   
+ //   TH2D *M_0_all= new TH2D("Matrix0_2D_HitMap",";Col;Row",32,0,32,128,0,128);
+ //   TH2D *M_1_all= new TH2D("Matrix1_2D_HitMap",";Col;Row",32,0,32,128,0,128);
+ //   TH2D *M_2_all= new TH2D("Matrix2_2D_HitMap",";Col;Row",32,0,32,128,0,128);
+ // 
+ //   char h_3d[100];
+ //   sprintf(h_3d,";Col;Row;TH");
+ //   int p_end=parameters[Steps-1];
+ //   TH3D *M_0_3d= new TH3D("Matrix0_3D_HitMap",h_3d,32,0,32,128,0,128,Steps,parameters[0],p_end);
+ //   TH3D *M_1_3d= new TH3D("Matrix1_3D_HitMap",h_3d,32,0,32,128,0,128,Steps,parameters[0],p_end);
+ //   TH3D *M_2_3d= new TH3D("Matrix2_3D_HitMap",h_3d,32,0,32,128,0,128,Steps,parameters[0],p_end);
 
-    TH1D *m0_eff = new TH1D("Matrix0_3D_efficiency",";TH;Counts",Steps,parameters[0],p_end);
-    TH1D *m1_eff = new TH1D("Matrix1_3D_efficiency",";TH;Counts",Steps,parameters[0],p_end);
-    TH1D *m2_eff = new TH1D("Matrix2_3D_efficiency",";TH;Counts",Steps,parameters[0],p_end);
+ //   TH1D *m0_eff = new TH1D("Matrix0_3D_efficiency",";TH;Counts",Steps,parameters[0],p_end);
+ //   TH1D *m1_eff = new TH1D("Matrix1_3D_efficiency",";TH;Counts",Steps,parameters[0],p_end);
+ //   TH1D *m2_eff = new TH1D("Matrix2_3D_efficiency",";TH;Counts",Steps,parameters[0],p_end);
 
-    std::cout<<"steps : "<<Steps<<" from "<<parameters[0]<<" to "<<p_end<<std::endl;
+    std::cout<<"steps : "<<Steps<<" from "<<parameters[0]<<" to "<<parameters[Steps-1]<<std::endl;
+    int threshold_t;
+    int col_t_0;
+    int row_t_0;
+    int Dv_flag_0;
+    int Mv_flag_0;
+
+    int col_t_1;
+    int row_t_1;
+    int Dv_flag_1;
+    int Mv_flag_1;
+
+    int col_t_2;
+    int row_t_2;
+    int Dv_flag_2;
+    int Mv_flag_2;
+    char save_name_root[100];
+    sprintf(save_name_root,"%s_tree.root",save_name.c_str());
+    TFile *file_r=TFile::Open(save_name_root,"RECREATE");  
+    TTree Chess2_tree("Chess2_Tree","A tree with data from chess2 test");
+
+    Chess2_tree.Branch("threshold_tr",&threshold_t);
+    Chess2_tree.Branch("col_tr_0",&col_t_0); 
+    Chess2_tree.Branch("row_tr_0",&row_t_0); 
+    Chess2_tree.Branch("Dv_flag_tr_0",&Dv_flag_0); 
+    Chess2_tree.Branch("Mv_flag_tr_0",&Mv_flag_0); 
+
+    Chess2_tree.Branch("col_tr_1",&col_t_1); 
+    Chess2_tree.Branch("row_tr_1",&row_t_1); 
+    Chess2_tree.Branch("Dv_flag_tr_1",&Dv_flag_1); 
+    Chess2_tree.Branch("Mv_flag_tr_1",&Mv_flag_1); 
+
+    Chess2_tree.Branch("col_tr_2",&col_t_2); 
+    Chess2_tree.Branch("row_tr_2",&row_t_2); 
+    Chess2_tree.Branch("Dv_flag_tr_2",&Dv_flag_2); 
+    Chess2_tree.Branch("Mv_flag_tr_2",&Mv_flag_2); 
+
     int frame_number=0;
     int hist=0;
     //DataClass::DataClass *data_t = new DataClass::DataClass(&frame);
@@ -99,47 +130,48 @@ int main(int argc, char* argv[]){
         file = fopen(file_name_s,"rb");
         
         while(get_next_frame(file,&frame)==0){
-            if (frame.payload_size!=0){
+            if (1){
+            //if (frame.payload_size!=0){
                 //std::cout<< "frame -> payload_size: "<< frame.payload_size <<std::endl;
                 frame_number++;//std::cout<<"frame number : "<<frame_number<<std::endl;
                 data_t->Init();
                 //std::cout<<"Init "<<(data_t->get_Hitmap(0)).size()<<std::endl; 
                 data_t->setFrame(&frame);
-                //std::cout<<"setFrame "<<(data_t->get_Hitmap(0)).size()<<std::endl; 
-                if (0){ //ignore M0
-                //if ((data_t->get_Hitmap(0)).size()>0){ 
+                threshold_t=parameters[hist];
+                if (frame_number<=frames[hist]){
+                    if (frame_number == frames[hist]){
+                        std::cout<<"filling "<< frames[hist] << std::endl;
+                        hist+=1;
+              
+                    }
+                }
+                //if (0){ //ignore M0
+                if ((data_t->get_Hitmap(0)).size()>0){ 
                     for (int h_0=0;h_0<(data_t->get_Hitmap(0)).size();h_0++){
-                         m0_eff->Fill(parameters[hist]);
-                         M_0_all->Fill((data_t->get_Hitmap(0))[h_0][1],(data_t->get_Hitmap(0))[h_0][0]);
-                         M_0_step[hist]->Fill((data_t->get_Hitmap(0))[h_0][1],(data_t->get_Hitmap(0))[h_0][0]);
-                         M_0_3d->Fill((data_t->get_Hitmap(0))[h_0][1],(data_t->get_Hitmap(0))[h_0][0],parameters[hist]);
+                         col_t_0=(data_t->get_Hitmap(0))[h_0][1];
+                         row_t_0=(data_t->get_Hitmap(0))[h_0][0];
+                         Dv_flag_0=data_t->get_dv(0)[h_0];
+                         Mv_flag_0=data_t->get_mv(0)[h_0];
                     }     
                 }
                 if ((data_t->get_Hitmap(1)).size()>0){ 
                     for (int h_1=0;h_1<(data_t->get_Hitmap(1)).size();h_1++){
-                         m1_eff->Fill(parameters[hist]);
-                   //      std::cout<<"M1: "<<(data_t->get_Hitmap(1))[h_1][1]<< " "<<(data_t->get_Hitmap(1))[h_1][0]<<std::endl;
-                         M_1_all->Fill((data_t->get_Hitmap(1))[h_1][1],(data_t->get_Hitmap(1))[h_1][0]);
-                         M_1_step[hist]->Fill((data_t->get_Hitmap(1))[h_1][1],(data_t->get_Hitmap(1))[h_1][0]);
-                         M_1_3d->Fill((data_t->get_Hitmap(1))[h_1][1],(data_t->get_Hitmap(1))[h_1][0],parameters[hist]);
+                         col_t_1=(data_t->get_Hitmap(1))[h_1][1];
+                         row_t_1=(data_t->get_Hitmap(1))[h_1][0];
+                         Dv_flag_1=data_t->get_dv(1)[h_1];
+                         Mv_flag_1=data_t->get_mv(1)[h_1];
                     }    
                 }
-                if (0){ // ingnore M2
-                //if ((data_t->get_Hitmap(2)).size()>0){ 
+                //if (0){ // ingnore M2
+                if ((data_t->get_Hitmap(2)).size()>0){ 
                     for (int h_2=0;h_2<(data_t->get_Hitmap(2)).size();h_2++){
-                         m2_eff->Fill(parameters[hist]);
-                         std::cout<<"M2: "<<(data_t->get_Hitmap(2))[h_2][1]<< " "<<(data_t->get_Hitmap(2))[h_2][0]<<std::endl;
-                         M_2_all->Fill((data_t->get_Hitmap(2))[h_2][1],(data_t->get_Hitmap(2))[h_2][0]);
-                         M_2_step[hist]->Fill((data_t->get_Hitmap(2))[h_2][1],(data_t->get_Hitmap(2))[h_2][0]);
-                         M_2_3d->Fill((data_t->get_Hitmap(2))[h_2][1],(data_t->get_Hitmap(2))[h_2][0],parameters[hist]);
+                         col_t_2=(data_t->get_Hitmap(2))[h_2][1];
+                         row_t_2=(data_t->get_Hitmap(2))[h_2][0];
+                         Dv_flag_2=data_t->get_dv(2)[h_2];
+                         Mv_flag_2=data_t->get_mv(2)[h_2];
                     }   
                 }
-                if (frame_number == frames[hist]){
-                    std::cout<< frames[hist] << std::endl;
-                    hist+=1;
-              
-                }
-
+                Chess2_tree.Fill();
             }
             delete_frame(&frame);
           //  std::cout<< "frame size is 0"<<std::endl;
@@ -149,26 +181,7 @@ int main(int argc, char* argv[]){
         std::cout<< "frame number in total :"<<frame_number << std::endl;
         //delete_frame(&frame);
     }
-    //fclose(stream);
-    char save_name_root[100];
-    sprintf(save_name_root,"%s_cpackage.root",save_name.c_str());
-    TFile *file_r=TFile::Open(save_name_root,"RECREATE");   
-    for (int f=0;f<hist;f++){
-    M_0_step[f]->Write();
-    M_1_step[f]->Write();
-    M_2_step[f]->Write();
-    }
-    M_0_3d->Write();
-    M_1_3d->Write();
-    M_2_3d->Write();
-    M_0_all->Write();
-    M_1_all->Write();
-    M_2_all->Write();
-    m0_eff->Write();
-    m1_eff->Write();
-    m2_eff->Write();
-    file_r->Close();
-    std::cout<<"end"<<std::endl;
+    file_r->Write(); 
     return 1;
     
 }

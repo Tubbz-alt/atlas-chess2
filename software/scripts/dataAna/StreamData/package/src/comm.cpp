@@ -24,6 +24,7 @@ int get_next_frame(FILE *stream, struct Frame *frame){
             return 1;
         }
         else {
+          //  std::cout<<frame_length<<std::endl;
             long pos_now=ftell(stream);
             //if (1){
             if (ftell(stream)- pos_now < frame->frame_Header.frame_size){
