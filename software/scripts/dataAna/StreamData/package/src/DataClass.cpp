@@ -18,7 +18,8 @@ void DataClass::setFrame(struct Frame *frame)
     int m_d=0;
     for (int j=0;j<frame->payload_size;j++){ 
         data_t=frame->payload[j];
-        if (data_t>0){
+        if (1){
+        //if (data_t>0){
             m_d=j%4;
             switch(m_d){
                 case 0:add_data(data_t,0);break;

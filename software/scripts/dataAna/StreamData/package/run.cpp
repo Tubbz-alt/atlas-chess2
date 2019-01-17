@@ -83,21 +83,19 @@ int main(int argc, char* argv[]){
  //   TH1D *m2_eff = new TH1D("Matrix2_3D_efficiency",";TH;Counts",Steps,parameters[0],p_end);
 
     std::cout<<"steps : "<<Steps<<" from "<<parameters[0]<<" to "<<parameters[Steps-1]<<std::endl;
-    int threshold_t;
-    int col_t_0;
-    int row_t_0;
-    int Dv_flag_0;
-    int Mv_flag_0;
-
-    int col_t_1;
-    int row_t_1;
-    int Dv_flag_1;
-    int Mv_flag_1;
-
-    int col_t_2;
-    int row_t_2;
-    int Dv_flag_2;
-    int Mv_flag_2;
+    std::vector<int> threshold_t;
+    std::vector<int> col_t_0;
+    std::vector<int> row_t_0;
+    std::vector<int> Dv_flag_0;
+    std::vector<int> Mv_flag_0;
+    std::vector<int> col_t_1;
+    std::vector<int> row_t_1;
+    std::vector<int> Dv_flag_1;
+    std::vector<int> Mv_flag_1;
+    std::vector<int> col_t_2;
+    std::vector<int> row_t_2;
+    std::vector<int> Dv_flag_2;
+    std::vector<int> Mv_flag_2;
     char save_name_root[100];
     sprintf(save_name_root,"%s_tree.root",save_name.c_str());
     TFile *file_r=TFile::Open(save_name_root,"RECREATE");  
@@ -137,7 +135,7 @@ int main(int argc, char* argv[]){
                 data_t->Init();
                 //std::cout<<"Init "<<(data_t->get_Hitmap(0)).size()<<std::endl; 
                 data_t->setFrame(&frame);
-                threshold_t=parameters[hist];
+                threshold_t.push_back(parameters[hist]);
                 if (frame_number<=frames[hist]){
                     if (frame_number == frames[hist]){
                         std::cout<<"filling "<< frames[hist] << std::endl;
@@ -145,33 +143,46 @@ int main(int argc, char* argv[]){
               
                     }
                 }
-                //if (0){ //ignore M0
-                if ((data_t->get_Hitmap(0)).size()>0){ 
+                if (0){ //ignore M0
+                //if ((data_t->get_Hitmap(0)).size()>0){
                     for (int h_0=0;h_0<(data_t->get_Hitmap(0)).size();h_0++){
-                         col_t_0=(data_t->get_Hitmap(0))[h_0][1];
-                         row_t_0=(data_t->get_Hitmap(0))[h_0][0];
-                         Dv_flag_0=data_t->get_dv(0)[h_0];
-                         Mv_flag_0=data_t->get_mv(0)[h_0];
+                         col_t_0.push_back((data_t->get_Hitmap(0))[h_0][1]);
+                         row_t_0.push_back((data_t->get_Hitmap(0))[h_0][0]);
+                         Dv_flag_0.push_back(data_t->get_dv(0)[h_0]);
+                         Mv_flag_0.push_back(data_t->get_mv(0)[h_0]);
                     }     
                 }
                 if ((data_t->get_Hitmap(1)).size()>0){ 
                     for (int h_1=0;h_1<(data_t->get_Hitmap(1)).size();h_1++){
-                         col_t_1=(data_t->get_Hitmap(1))[h_1][1];
-                         row_t_1=(data_t->get_Hitmap(1))[h_1][0];
-                         Dv_flag_1=data_t->get_dv(1)[h_1];
-                         Mv_flag_1=data_t->get_mv(1)[h_1];
+                         col_t_1.push_back((data_t->get_Hitmap(1))[h_1][1]);
+                         row_t_1.push_back((data_t->get_Hitmap(1))[h_1][0]);
+                         Dv_flag_1.push_back(data_t->get_dv(1)[h_1]);
+                         Mv_flag_1.push_back(data_t->get_mv(1)[h_1]);
                     }    
                 }
-                //if (0){ // ingnore M2
-                if ((data_t->get_Hitmap(2)).size()>0){ 
+                if (0){ // ingnore M2
+                //if ((data_t->get_Hitmap(2)).size()>0){ 
                     for (int h_2=0;h_2<(data_t->get_Hitmap(2)).size();h_2++){
-                         col_t_2=(data_t->get_Hitmap(2))[h_2][1];
-                         row_t_2=(data_t->get_Hitmap(2))[h_2][0];
-                         Dv_flag_2=data_t->get_dv(2)[h_2];
-                         Mv_flag_2=data_t->get_mv(2)[h_2];
+                         col_t_2.push_back((data_t->get_Hitmap(2))[h_2][1]);
+                         row_t_2.push_back((data_t->get_Hitmap(2))[h_2][0]);
+                         Dv_flag_2.push_back(data_t->get_dv(2)[h_2]);
+                         Mv_flag_2.push_back(data_t->get_mv(2)[h_2]);
                     }   
                 }
                 Chess2_tree.Fill();
+                threshold_t.clear();
+                col_t_0.clear();
+                row_t_0.clear();
+                Dv_flag_0.clear();
+                Mv_flag_0.clear();
+                col_t_1.clear();
+                row_t_1.clear();
+                Dv_flag_1.clear();
+                Mv_flag_1.clear();
+                col_t_2.clear();
+                row_t_2.clear();
+                Dv_flag_2.clear();
+                Mv_flag_2.clear();
             }
             delete_frame(&frame);
           //  std::cout<< "frame size is 0"<<std::endl;
