@@ -152,7 +152,7 @@ int main(int argc, char* argv[]){
                          Mv_flag_0.push_back(data_t->get_mv(0)[h_0]);
                     }     
                 }
-                if ((data_t->get_Hitmap(1)).size()>0){ 
+                if ((data_t->get_Hitmap(1)).size()>0){
                     for (int h_1=0;h_1<(data_t->get_Hitmap(1)).size();h_1++){
                          col_t_1.push_back((data_t->get_Hitmap(1))[h_1][1]);
                          row_t_1.push_back((data_t->get_Hitmap(1))[h_1][0]);

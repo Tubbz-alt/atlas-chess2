@@ -16,17 +16,12 @@ void DataClass::setFrame(struct Frame *frame)
 
     uint16_t data_t;
     int m_d=0;
-    for (int j=0;j<frame->payload_size;j++){ 
+    for (int j=0;j<(frame->payload_size/2);j++){ 
         data_t=frame->payload[j];
         if (1){
         //if (data_t>0){
             m_d=j%4;
-            switch(m_d){
-                case 0:add_data(data_t,0);break;
-                case 1:add_data(data_t,1);break;
-                case 2:add_data(data_t,2);break;
-                default: break;
-                }
+            if (m_d!=3){add_data(data_t,m_d);}
         }
 
     }    

@@ -16,7 +16,7 @@
 int get_next_frame(FILE *stream, struct Frame *frame){
     if (fread(frame, sizeof frame->frame_Header,1,stream)==1){
          //header is 40 bytes in total 
-        uint32_t frame_length=((frame->frame_Header.frame_size)-36)/2; // size of the payload
+        uint32_t frame_length=((frame->frame_Header.frame_size)-36)/8; // size of the payload in unit of bytes
         if (frame_length == 0){
             std::cout<< "could read the header but length is 0"<<std::endl;
             frame->payload=NULL;
@@ -28,8 +28,8 @@ int get_next_frame(FILE *stream, struct Frame *frame){
             long pos_now=ftell(stream);
             //if (1){
             if (ftell(stream)- pos_now < frame->frame_Header.frame_size){
-                frame->payload = (uint16_t *) malloc(frame_length*2);
-                if (fread(frame->payload,frame_length*2,1,stream)!=0){
+                frame->payload = (uint16_t *) malloc(frame_length*8);
+                if (fread(frame->payload,frame_length*8,1,stream)!=0){
                    frame->payload_size = frame_length;
                    return 0;
                 }
